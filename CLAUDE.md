@@ -137,8 +137,32 @@ El ~88% citado antes de medir esto era una impresión visual sobre `real_plates`
 coincide con el 86.8% real de ese subconjunto, pero no valía como evidencia.
 
 **Limitación**: acierto = el recorte contiene la matrícula entera y legible. **No es IoU**, no mide
-lo ajustada que está la caja. Para IoU hacen falta cajas anotadas — las mismas que YOLO necesitará
-para entrenar, así que anotarlas no es trabajo extra.
+lo ajustada que está la caja.
+
+## Anotación de cajas (preparación de la Sesión 2)
+
+`scripts/06_export_yolo.py` genera `yolo_dataset/` en formato estándar de ultralytics, usando los
+veredictos como **pre-anotación**: escribe la caja del detector en las 134 que acierta y deja
+vacías las 66 que falla, listadas en `PENDIENTES.txt`. Split estratificado por dataset y vista,
+semilla fija (160 train / 40 val).
+
+```powershell
+python scripts/06_export_yolo.py                # etiquetas
+python scripts/06_export_yolo.py --copy-images  # y copia las fotos
+```
+
+**Nunca pisa una etiqueta existente** (hace falta `--force`): las correcciones manuales son trabajo
+irrecuperable. Las etiquetas **sí se versionan**, las imágenes no.
+
+Dos avisos:
+
+- Una pre-anotación **no es una anotación**. La caja del morfológico contiene la matrícula pero
+  suele venir holgada o cortada, y una caja mal ajustada entrena mal. Hay que repasarlas **todas**
+  en un editor (labelImg, CVAT, Roboflow, Label Studio).
+- Con 202 imágenes no se entrena YOLO de cero: toca *fine-tuning* de un modelo preentrenado.
+
+Cuando las cajas estén revisadas, se podrá medir IoU y comparar morfológico vs. YOLO sobre el mismo
+conjunto de validación — que es el Obj3 y, con el split, el Obj6.
 
 ### Dos fotos del mismo coche: sufijo `_2`, no inventar matrícula
 
