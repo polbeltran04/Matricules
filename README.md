@@ -87,14 +87,19 @@ tal cual: la versión que funciona es `scripts/01_data_exploration.py`.
 
 ## Dataset ampliado
 
-30 fotos propias en `new_plates/` (21 Frontal, 9 Lateral), anotadas en `new_plates/metadata.csv`.
-Las imágenes tampoco se versionan, pero el CSV sí, así que el etiquetado queda en el repo.
+**138 fotos propias** en `new_plates/` (103 Frontal, 29 Lateral, 6 de otros formatos), tomadas con
+dos móviles distintos y anotadas en `new_plates/metadata.csv`. Con las del profesorado son
+**201 imágenes**. Las fotos no se versionan, pero el CSV sí, así que el etiquetado queda en el repo.
 
 > **Al transferirlas del móvil, no uses WhatsApp como imagen**: borra el EXIF y baja la resolución
 > a la cuarta parte. Envíalas como *Documento*, en un ZIP, o por cable.
 
+`new_plates/OtrosFormatos/` contiene matrículas que no siguen el formato español moderno
+(francesas, andorrana, británica y dos españolas antiguas). Quedan fuera de la estadística y del
+ground truth, pero documentadas.
+
 Con `python main.py --new`, el script 01 compara el dataset del profesorado con el nuestro y
-confirma que aportan condiciones distintas: iluminación (p = 1.3e-08), saturación (p = 5.7e-04),
-ángulo (p = 2.3e-06) y área de la placa (p = 4.4e-02).
+confirma que aportan condiciones distintas: **iluminación (p = 1.4e-26)**, saturación (p = 2.0e-06)
+y área de la placa (p = 2.9e-02). Exterior soleado frente a parking cubierto.
 
 Pendiente para completar la checklist del enunciado: **fotos nocturnas y alguna desenfocada**.

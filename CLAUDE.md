@@ -116,31 +116,47 @@ el recorte parte la matrícula por la mitad.
 
 ## Dataset ampliado (slide 17)
 
-**30 fotos propias** en `new_plates/`, 21 Frontal y 9 Lateral, anotadas en `new_plates/metadata.csv`.
-OPPO A94 5G, 4000×3000, con EXIF intacto (**importante: transferir sin WhatsApp**, que borra el EXIF
-y baja a 2000×1500). Matrículas leídas a mano y validadas contra el formato español
-(4 dígitos + 3 consonantes, sin vocales ni Ñ/Q).
+**138 fotos propias** en `new_plates/`, en dos lotes, anotadas en `new_plates/metadata.csv`.
+Todas con EXIF intacto (**importante: transferir sin WhatsApp**, que borra el EXIF y baja a
+2000×1500; enviar como *Documento* o en ZIP).
 
-Con `--new`, el script 01 añade la comparación **protocolo vs. dataset ampliado**, que es el Obj1:
+| | Lote 1 | Lote 2 |
+|---|---|---|
+| Cámara | OPPO A94 5G | Xiaomi 2209116AG |
+| Fotos | 30 | 108 |
+| ISO | 100–2163 | 50 (constante) |
+
+Reparto: **Frontal 103 · Lateral 29 · OtrosFormatos 6**. Total con `real_plates`: **201 imágenes**.
+
+Matrículas leídas a mano y validadas contra el formato español (4 dígitos + 3 consonantes,
+sin vocales ni Ñ/Q). **Ese validador detectó dos errores de lectura reales**: `5241OGG`→`5241DGG`
+y `6158CCQ`→`6158CCG`, porque la O y la Q no existen en matrículas españolas.
+
+`new_plates/OtrosFormatos/` guarda 6 matrículas que **no** siguen el formato español moderno:
+2 francesas, 1 andorrana, 1 británica y 2 españolas antiguas (`B 2048 UJ`). No está en
+`config.VIEWS`, así que queda fuera de la estadística y del ground truth, pero documentada:
+es un caso real que un ALPR desplegado en España se encuentra.
+
+Con `--new`, el script 01 añade la comparación **protocolo vs. dataset ampliado** (Obj1):
 
 | Propiedad | real_plates | new_plates | p | |
 |---|---|---|---|---|
-| Iluminación (V) | 108.2 | **127.0** | 1.3e-08 | SEPARA |
-| Saturación (S) | 41.8 | **50.0** | 5.7e-04 | SEPARA |
-| Ángulo | 4.2° | −4.8° | 2.3e-06 | SEPARA |
-| Área de placa | 219432 | 172747 | 4.4e-02 | SEPARA |
+| Iluminación (V) | 108.2 | **143.1** | **1.4e-26** | SEPARA |
+| Saturación (S) | 41.8 | **49.3** | 2.0e-06 | SEPARA |
+| Área de placa | 219432 | 173956 | 2.9e-02 | SEPARA |
+| Ángulo | 4.2° | 2.2° | 0.14 | no separa |
 
-Es decir: las nuestras son objetivamente **más brillantes, más saturadas y tomadas desde más lejos**.
-Exterior soleado frente a parking cubierto. Ese contraste medido es el argumento del Obj1.
+Las nuestras son **mucho más brillantes y saturadas, y tomadas desde más lejos**: exterior soleado
+frente a parking cubierto. Ese contraste medido es el argumento del Obj1.
 
-Cobertura de condiciones — **falta lo nocturno**:
+Cobertura de condiciones — **falta lo nocturno y el desenfoque**:
 
-- [x] Luz solar directa (22 fotos)
-- [x] Sombra (6)
-- [x] Luz artificial (1, garaje)
-- [x] Reflejos / glare (1, parasol)
-- [x] Bajo contraste (4, carrocerías oscuras)
-- [x] Viewpoints distintos
-- [x] Matrículas traseras (4) — el dataset original solo tiene delanteras
+- [x] Luz solar directa · sombra · luz artificial (garaje)
+- [x] Reflejos / glare, bajo contraste (carrocerías oscuras)
+- [x] Viewpoints y cámaras distintas (3 móviles en total)
+- [x] Matrículas traseras — el dataset original solo tiene delanteras
 - [ ] **Noche**
 - [ ] **Desenfocadas**
+
+**Aviso: el reparto Frontal/Lateral está desbalanceado** (103 vs 29). Al evaluar por vista, usar
+métricas que no se dejen arrastrar por el desequilibrio.
