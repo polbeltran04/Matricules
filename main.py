@@ -31,6 +31,7 @@ STAGES = [
     ("detect", "scripts/02_show_detections.py", "Bounding boxes y mosaicos"),
     ("explain", "scripts/03_explain_pipeline.py", "Pipeline paso a paso (figuras memoria)"),
     ("accuracy", "scripts/05_detection_accuracy.py", "Tasa de acierto real del detector"),
+    ("iou", "scripts/08_iou_baseline.py", "IoU contra las cajas anotadas (linea base)"),
 ]
 
 STAGE_NAMES = [name for name, _, _ in STAGES]

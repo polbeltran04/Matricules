@@ -40,6 +40,7 @@ python main.py --new           # incluir new_plates/ en la exploración
 | `explore` | `scripts/01_data_exploration.py` | `--new`, `--show` |
 | `detect` | `scripts/02_show_detections.py` | `-n N` |
 | `explain` | `scripts/03_explain_pipeline.py` | `<imagen>`, `--zoom` |
+| `iou` | `scripts/08_iou_baseline.py` | `--csv` |
 
 `03_explain_pipeline.py` ilustra el pipeline sobre una imagen: panel de las 6 etapas de
 `plate_mask()` y tabla de decisión contorno a contorno. **Reutiliza `plate_mask(steps=...)` y
@@ -136,8 +137,44 @@ cuantitativa para pasar a YOLO en la Sesión 2.
 El ~88% citado antes de medir esto era una impresión visual sobre `real_plates` solo; casualmente
 coincide con el 86.8% real de ese subconjunto, pero no valía como evidencia.
 
-**Limitación**: acierto = el recorte contiene la matrícula entera y legible. **No es IoU**, no mide
-lo ajustada que está la caja.
+**Limitación**: acierto = el recorte contiene la matrícula entera y legible. No mide lo ajustada
+que está la caja. Para eso está el IoU, abajo.
+
+## Línea base de localización: IoU (las 200 anotadas)
+
+Con las 200 cajas anotadas a mano, `scripts/08_iou_baseline.py` (etapa `iou`) mide lo que ni la
+cobertura ni el acierto medían: **cuánto se solapa la caja propuesta con la real**.
+
+| Grupo | IoU medio | Mediana | ≥ 0.5 | ≥ 0.7 |
+|---|---|---|---|---|
+| **TOTAL** | 0.562 | 0.678 | **65.0%** | **48.0%** |
+| `real_plates` | 0.747 | 0.806 | 85.3% | 70.6% |
+| `new_plates` | 0.467 | 0.600 | 54.5% | 36.4% |
+| Frontal | 0.560 | 0.676 | 63.6% | 46.3% |
+| Lateral | 0.565 | 0.709 | 67.1% | 50.6% |
+
+**El 65.0% a IoU ≥ 0.5 coincide con el 67.0% de acierto revisado a ojo.** Son dos medidas
+independientes —una geométrica y automática, otra humana y cualitativa— que se diferencian en 2
+puntos. Eso valida las dos: el 67% no era una impresión, y el IoU no está mal calculado.
+
+Al umbral que ALPR necesita (**IoU ≥ 0.7**), baja al **48%**.
+
+### Localizar mal y cortar son fallos distintos
+
+Sobre las 97 con cuadrilátero, separando ambos:
+
+| | |
+|---|---|
+| Ni la localiza (IoU < 0.5) | **32.0%** |
+| De las que sí localiza: la coge entera | solo **21.2%** |
+| De las que sí localiza: la corta | **78.8%** (contención mediana 0.945) |
+
+O sea: cuando encuentra la matrícula, **casi siempre se come un trozo** — típicamente un carácter
+del borde. Eso es lo que rompe la segmentación posterior, más que los fallos de localización.
+
+`containment` (fracción de la placa real dentro de la caja) solo es interpretable donde el detector
+está *sobre* la placa; si cogió un faro, vale 0 pero el problema no es que corte. Por eso el script
+los cuenta aparte. El IoU y la contención están verificados con casos de valor conocido.
 
 ## Anotación de cajas (preparación de la Sesión 2)
 
@@ -163,20 +200,51 @@ Dos avisos:
 
 ### Anotador interactivo
 
-`scripts/07_annotate.py` revisa las cajas una a una: muestra la propuesta del detector y se aprueba
-o se redibuja con el ratón.
+`scripts/07_annotate.py` revisa las cajas una a una: muestra la propuesta del detector y se aprueba,
+se marcan las esquinas o se redibuja con el ratón.
 
 ```powershell
 python scripts/07_annotate.py                 # todas las no revisadas
 python scripts/07_annotate.py --only-pending  # solo las que no tienen caja
 python scripts/07_annotate.py --list          # ver qué queda, sin abrir ventana
+python scripts/07_annotate.py --rebuild --pad 0.06   # rehacer cajas con otro margen
 ```
 
-`a`/espacio aprobar · `d` dibujar · `n` sin matrícula · `s` saltar · `z` deshacer · `q` salir.
+`c` esquinas · `a`/espacio aprobar · `d` rectángulo · `n` sin matrícula · `s` saltar ·
+`z` deshacer · `+`/`-` zoom · `q` salir.
 
 Lleva registro en `yolo_dataset/reviewed.csv` y **guarda tras cada decisión**, así que se puede
 parar y continuar. Las ya revisadas no vuelven a salir, de modo que al añadir fotos nuevas solo
 pide las que faltan.
+
+**La imagen se ajusta a la pantalla por ancho Y alto.** Escalar solo por el ancho dejaba una foto
+vertical de 3000×4000 en 1200×1600, más alta que la pantalla (1536×864), y era imposible marcar la
+matrícula. Una lupa sigue al ratón mostrando los píxeles originales, porque en una foto reducida a
+la mitad no se ve dónde cae exactamente la esquina.
+
+#### Por qué marcar esquinas y no un rectángulo
+
+La caja YOLO es *axis-aligned*: sobre una placa inclinada **tiene que** meter parachoques. Medido
+sobre un cuadrilátero sintético:
+
+| Inclinación de la placa | Fondo extra que mete la caja recta |
+|---|---|
+| 1.4° (casi frontal) | **+25%** |
+| lateral con perspectiva | **+81%** |
+
+Con la tecla `c` se marcan las 4 esquinas de la placa y el script deriva la caja recta añadiendo un
+margen **fijo** (`PAD_FRAC = 4%`), igual para todas. Eso separa dos cosas que antes iban juntas:
+
+- **el cuadrilátero** es la anotación precisa de la placa, en `yolo_dataset/quads.csv`;
+- **la caja** es un derivado reproducible, y `--rebuild --pad X` la regenera entera con otro margen
+  sin volver a anotar nada.
+
+El margen deja así de depender del pulso, que era la fuente de ruido. Y el cuadrilátero es
+exactamente lo que hace falta en la Sesión 2 para `cv2.getPerspectiveTransform` — rectificar la
+placa antes de segmentar caracteres. `order_quad()` lo deja ya en orden TL, TR, BR, BL, sea cual
+sea el orden en que se hicieron los clics.
+
+El modo `d` (arrastrar un rectángulo) sigue ahí: es más rápido y vale cuando la placa está recta.
 
 ### Tolerancia de la caja: IoU
 
@@ -189,6 +257,44 @@ completa dentro**. Al anotar, mejor pasarse un poco de margen que quedarse corto
 
 Cuando las cajas estén revisadas, se podrá medir IoU y comparar morfológico vs. YOLO sobre el mismo
 conjunto de validación — que es el Obj3 y, con el split, el Obj6.
+
+#### Estado: 200 de 200 anotadas
+
+| Cómo se marcó | Cuántas |
+|---|---|
+| `quad` — 4 esquinas | **97** |
+| `drawn` — rectángulo arrastrado | 39 |
+| `approved` — pre-anotación del detector aceptada | 64 |
+
+Las 97 rectifican correctamente con `warpPerspective` y **las 97 placas resultantes se leen y
+coinciden con el nombre del fichero**: son 97 etiquetas de ground truth confirmadas de forma
+independiente, casi la mitad del dataset.
+
+Medido sobre esas 97: AR real de la placa **4.23** de mediana (2.90–5.37), inclinación mediana
+**6.3°** con máximo de 25.8°, y la caja recta mete **+77%** de fondo sobre el área de la placa.
+
+**`s` (saltar) no guarda nada.** Es fácil confundirlo con aprobar y perder el repaso entero, así
+que el script avisa al salir de cuántas se saltaron.
+
+#### Lo que se anotó a mano en el primer lote
+
+Las **63 primeras** se dibujaron como rectángulo (antes del modo esquinas). Revisadas una a una
+contra el recorte: **ninguna corta un carácter**. Sus medidas:
+
+| | |
+|---|---|
+| AR mediana en píxeles | **3.25** · Frontal 3.36 · Lateral 2.72 |
+| Área mediana | 1.14% de la imagen |
+
+El AR 3.25 frente al 4.73 de una placa real no es un error: significa que se dibujó con **más margen
+vertical que horizontal**, que es el lado seguro. Pero es un margen *variable*, decidido a pulso en
+cada foto. Las anotadas con `c` a partir de aquí llevan margen fijo del 4%.
+
+**Consecuencia para la memoria**: la caja anotada no es la placa exacta, es placa + algo de
+parachoques. Como el sesgo va en la misma dirección para todas, no favorece a ninguno de los dos
+detectores en la comparación morfológico vs. YOLO, pero hay que decirlo al reportar el IoU
+absoluto. El cuadrilátero de `quads.csv` sí es la placa exacta, y con él se puede medir IoU limpio
+en las que lo tengan.
 
 ### Dos fotos del mismo coche: sufijo `_2`, no inventar matrícula
 
