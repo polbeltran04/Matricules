@@ -30,6 +30,7 @@ STAGES = [
     ("explore", "scripts/01_data_exploration.py", "Propiedades, estadistica y figuras"),
     ("detect", "scripts/02_show_detections.py", "Bounding boxes y mosaicos"),
     ("explain", "scripts/03_explain_pipeline.py", "Pipeline paso a paso (figuras memoria)"),
+    ("accuracy", "scripts/05_detection_accuracy.py", "Tasa de acierto real del detector"),
 ]
 
 STAGE_NAMES = [name for name, _, _ in STAGES]

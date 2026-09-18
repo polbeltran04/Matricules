@@ -112,21 +112,39 @@ el recorte parte la matrícula por la mitad.
 - **Cobertura: 99.0%** (200/202 imágenes con ≥1 candidato), mediana de 3 candidatos por imagen.
 - El ángulo **separa las vistas** y la iluminación **separa los datasets** (ver arriba).
 
-### La cobertura NO es la tasa de acierto
+### Cobertura ≠ acierto. Son 99.0% y 67.0%
 
-`cobertura` mide en cuántas imágenes `detectPlates` devolvió *algo*, no si ese algo era la
-matrícula: un faro o una rejilla cuentan igual. Con mediana de 3 candidatos por imagen, la mayoría
-de lo devuelto **no** es la placa.
+`cobertura` mide en cuántas imágenes `detectPlates` devolvió *algo*, no si era la matrícula: un
+faro cuenta igual. Con mediana de 3 candidatos por imagen, la mayoría no lo es.
 
-**No existe todavía validación automática del acierto.** El ~88% que se citó en su momento salió de
-mirar `out/detections/mosaico_*.jpg` a ojo: no es reproducible ni recalculable.
+**El acierto real está medido**: `scripts/05_detection_accuracy.py` (etapa `accuracy`), sobre los
+veredictos de `validation/detection_verdicts.csv` — las 200 imágenes con candidato, revisadas una
+a una comparando el recorte del candidato #1 con la matrícula del nombre.
 
-Medir el acierto de verdad exige **ground truth de caja** (coordenadas de la matrícula por imagen)
-y calcular IoU. El dataset no lo trae y anotarlo está pendiente — pero no es trabajo extra:
-**YOLO necesita esas mismas cajas para entrenarse en la Sesión 2**, así que anotar sirve a la vez
-para entrenar el modelo nuevo y para evaluar el morfológico actual.
+| Grupo | Acierto | IC 95% |
+|---|---|---|
+| **TOTAL** | **67.0%** (134/200) | 60.2 – 73.1% |
+| `real_plates` | **86.8%** (59/68) | 76.7 – 92.9% |
+| `new_plates` | **56.8%** (75/132) | 48.3 – 65.0% |
+| `new_plates` Lateral | **43.3%** (13/30) | 27.4 – 60.8% |
 
-Mientras tanto, la única evidencia de calidad es visual (`scripts/02`, `scripts/03`).
+**Ese contraste es el resultado importante de la Sesión 1.** El detector morfológico funciona
+razonablemente en el parking controlado del profesorado (87%) y se desploma en fotos de exterior
+con sol (57%), hasta el 43% en las laterales. No generaliza — y ahí está la justificación
+cuantitativa para pasar a YOLO en la Sesión 2.
+
+El ~88% citado antes de medir esto era una impresión visual sobre `real_plates` solo; casualmente
+coincide con el 86.8% real de ese subconjunto, pero no valía como evidencia.
+
+**Limitación**: acierto = el recorte contiene la matrícula entera y legible. **No es IoU**, no mide
+lo ajustada que está la caja. Para IoU hacen falta cajas anotadas — las mismas que YOLO necesitará
+para entrenar, así que anotarlas no es trabajo extra.
+
+### El dataset del profesorado tiene 2 etiquetas mal
+
+Detectado al revisar los recortes: `3040JMB.jpg` muestra **3044 JMB** y `3567DCX.jpg` muestra
+**3587 DCX**. Son errores de ground truth del material original, no fallos de detección. Están
+anotados en la columna `gt_issue` de los veredictos.
 
 ## Dataset ampliado (slide 17)
 

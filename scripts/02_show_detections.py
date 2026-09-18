@@ -13,6 +13,7 @@ Uso:
 """
 
 import argparse
+import csv
 import sys
 from pathlib import Path
 
@@ -22,7 +23,7 @@ import cv2
 import numpy as np
 
 import config
-from alpr.dataset import draw_candidates, unique_images
+from alpr.dataset import draw_candidates, plate_from_filename, unique_images
 from alpr.detection import detectPlates, normalized_angle
 
 PREVIEW_WIDTH = 1024        # ancho al que se guardan las imagenes anotadas
@@ -40,49 +41,81 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-n", "--limit", type=int, default=None,
                         help="procesar solo las N primeras imagenes de cada vista")
+    parser.add_argument("--new", action="store_true",
+                        help="incluir tambien new_plates/")
     args = parser.parse_args()
 
     out_root = config.OUT_DIR / "detections"
     out_root.mkdir(parents=True, exist_ok=True)
 
-    for view in config.VIEWS:
-        directory = config.REAL_PLATES_DIR / view
-        if not directory.is_dir():
-            continue
-        out_dir = out_root / view
-        out_dir.mkdir(exist_ok=True)
+    roots = [config.REAL_PLATES_DIR]
+    if args.new and config.NEW_PLATES_DIR.is_dir():
+        roots.append(config.NEW_PLATES_DIR)
 
-        paths, _ = unique_images(directory)
-        if args.limit:
-            paths = paths[:args.limit]
-
-        crops, n_detected = [], 0
-        for path in paths:
-            image = cv2.imread(str(path))
-            if image is None:
+    index = []
+    for root in roots:
+        for view in config.VIEWS:
+            directory = root / view
+            if not directory.is_dir():
                 continue
+            out_dir = out_root / root.name / view
+            crop_dir = out_root / "crops" / root.name / view
+            out_dir.mkdir(parents=True, exist_ok=True)
+            crop_dir.mkdir(parents=True, exist_ok=True)
 
-            candidates = detectPlates(image)
-            angles = [normalized_angle(cv2.minAreaRect(c)) for c in candidates]
-            annotated = draw_candidates(image, candidates, angles)
+            paths, _ = unique_images(directory)
+            if args.limit:
+                paths = paths[:args.limit]
 
-            scale = PREVIEW_WIDTH / annotated.shape[1]
-            annotated = cv2.resize(annotated, None, fx=scale, fy=scale,
-                                   interpolation=cv2.INTER_AREA)
-            cv2.imwrite(str(out_dir / path.name), annotated)
+            crops, n_detected = [], 0
+            for path in paths:
+                image = cv2.imread(str(path))
+                if image is None:
+                    continue
 
-            if candidates:
-                n_detected += 1
-                crop = crop_rect(image, cv2.minAreaRect(candidates[0]))
-                if crop.size:
-                    crops.append(cv2.resize(crop, CROP_SIZE))
+                candidates = detectPlates(image)
+                angles = [normalized_angle(cv2.minAreaRect(c)) for c in candidates]
+                annotated = draw_candidates(image, candidates, angles)
 
-        print(f"{view}: {n_detected}/{len(paths)} con candidato -> {out_dir}")
-        if crops:
-            mosaic_path = out_root / f"mosaico_{view}.jpg"
-            cv2.imwrite(str(mosaic_path), np.vstack(crops))
-            print(f"         mosaico de recortes -> {mosaic_path}")
+                scale = PREVIEW_WIDTH / annotated.shape[1]
+                cv2.imwrite(str(out_dir / path.name),
+                            cv2.resize(annotated, None, fx=scale, fy=scale,
+                                       interpolation=cv2.INTER_AREA))
 
+                row = {"source": root.name, "view": view, "file": path.name,
+                       "plate": plate_from_filename(path) or "",
+                       "n_candidates": len(candidates),
+                       "angle": round(angles[0], 2) if angles else "",
+                       "crop": ""}
+                if candidates:
+                    n_detected += 1
+                    crop = crop_rect(image, cv2.minAreaRect(candidates[0]))
+                    if crop.size:
+                        # Un fichero por imagen, nombrado con la matricula: al
+                        # mirarlo se compara lo que pone la placa con el nombre,
+                        # y eso da un veredicto de acierto sin anotar cajas.
+                        crop_path = crop_dir / path.name
+                        cv2.imwrite(str(crop_path), cv2.resize(crop, CROP_SIZE))
+                        crops.append(cv2.resize(crop, CROP_SIZE))
+                        row["crop"] = str(crop_path.relative_to(config.OUT_DIR))
+                index.append(row)
+
+            print(f"{root.name}/{view}: {n_detected}/{len(paths)} con candidato")
+            print(f"    anotadas -> {out_dir}")
+            print(f"    recortes -> {crop_dir}")
+            if crops:
+                mosaic = out_root / f"mosaico_{root.name}_{view}.jpg"
+                cv2.imwrite(str(mosaic), np.vstack(crops))
+                print(f"    mosaico  -> {mosaic}")
+
+    # Indice para la revision: una fila por imagen, con su recorte.
+    index_path = out_root / "candidatos.csv"
+    with open(index_path, "w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["source", "view", "file", "plate",
+                                                "n_candidates", "angle", "crop"])
+        writer.writeheader()
+        writer.writerows(index)
+    print(f"\nindice de candidatos -> {index_path} ({len(index)} filas)")
     return 0
 
 

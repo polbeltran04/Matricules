@@ -85,10 +85,22 @@ tal cual: la versión que funciona es `scripts/01_data_exploration.py`.
 - Dentro del dataset del profesorado, color e iluminación **no** separan nada: son todas del mismo
   móvil en el mismo parking. Al añadir las nuestras, la iluminación separa con p = 1.4e-26.
 
-> **La cobertura no es la tasa de acierto.** Mide en cuántas imágenes el detector devolvió *algo*,
-> no si ese algo era la matrícula — con una mediana de 3 candidatos por imagen, la mayoría no lo es.
-> Medir el acierto requiere ground truth de caja e IoU, que está **pendiente**. Esas mismas cajas
-> hacen falta para entrenar YOLO en la Sesión 2, así que el trabajo sirve para ambas cosas.
+### Cobertura no es acierto
+
+La cobertura solo dice que el detector devolvió *algo* (un faro cuenta igual). El **acierto real**,
+revisando a mano las 200 imágenes con candidato (`python main.py accuracy`):
+
+| Grupo | Acierto | IC 95% |
+|---|---|---|
+| **TOTAL** | **67.0%** | 60.2 – 73.1% |
+| `real_plates` (parking del profesorado) | **86.8%** | 76.7 – 92.9% |
+| `new_plates` (nuestras, exterior soleado) | **56.8%** | 48.3 – 65.0% |
+
+El detector morfológico **no generaliza**: cae 30 puntos al salir de las condiciones controladas
+del dataset original. Esa es la línea base contra la que se compara YOLO en la Sesión 2.
+
+Los veredictos están en `validation/detection_verdicts.csv`, así que el número es auditable.
+No es IoU — mide si el recorte contiene la matrícula entera, no lo ajustada que está la caja.
 
 ## Dataset ampliado
 
