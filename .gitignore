@@ -1,0 +1,15 @@
+.venv/
+out/
+__pycache__/
+*.pyc
+
+# El dataset NO se versiona: son 151 MB y, sobre todo, son fotos de matriculas
+# reales de terceros (dato personal identificable). Lo distribuye el profesorado.
+# Ver README.md para saber donde colocarlo.
+real_plates/
+new_plates/*/*.jpg
+new_plates/*/*.jpeg
+new_plates/*/*.png
+
+# Enunciado del challenge (material del profesorado).
+*.pdf

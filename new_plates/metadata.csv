@@ -1,0 +1,6 @@
+filename,plate,view,illumination,glare,blur,low_contrast,follows_protocol,notes
+# Rellenar una fila por foto nueva. Borrar estas dos lineas de ejemplo.
+# illumination: sunlight | shadow | night | artificial
+# glare/blur/low_contrast/follows_protocol: yes | no
+0000XXX.jpg,0000XXX,Frontal,sunlight,no,no,no,yes,ejemplo - borrar
+1111YYY.jpg,1111YYY,Lateral,night,yes,yes,yes,no,ejemplo - borrar

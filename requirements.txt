@@ -1,0 +1,13 @@
+opencv-python
+imutils
+numpy
+matplotlib
+pandas
+scipy
+
+# Sesiones futuras (descomentar cuando toque):
+# scikit-learn     # S5: SVM sobre HOG/LBP
+# torch            # S6: reconocimiento DL
+# torchvision
+# ultralytics      # S2: YOLO para deteccion
+# pytesseract      # S5: OCR off-the-shelf
