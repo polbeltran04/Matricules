@@ -56,6 +56,7 @@ sigue siendo ejecutable por separado:
 | `protocol` | `scripts/00_acquisition_protocol.py` | Protocolo de adquisición (EXIF) | — |
 | `explore` | `scripts/01_data_exploration.py` | Propiedades, estadística y figuras | `--new`, `--show` |
 | `detect` | `scripts/02_show_detections.py` | Bounding boxes y mosaicos | `-n N` |
+| `explain` | `scripts/03_explain_pipeline.py` | Pipeline paso a paso, para la memoria | `<imagen>`, `--zoom` |
 
 Todo lo generado va a `out/`, que tampoco se versiona.
 

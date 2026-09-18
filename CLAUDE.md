@@ -38,6 +38,13 @@ python main.py --new           # incluir new_plates/ en la exploración
 | `protocol` | `scripts/00_acquisition_protocol.py` | — |
 | `explore` | `scripts/01_data_exploration.py` | `--new`, `--show` |
 | `detect` | `scripts/02_show_detections.py` | `-n N` |
+| `explain` | `scripts/03_explain_pipeline.py` | `<imagen>`, `--zoom` |
+
+`03_explain_pipeline.py` ilustra el pipeline sobre una imagen: panel de las 6 etapas de
+`plate_mask()` y tabla de decisión contorno a contorno. **Reutiliza `plate_mask(steps=...)` y
+`candidate_verdict()`**, así que nunca se desincroniza del detector real — si cambias el pipeline,
+la explicación cambia sola. `candidate_verdict()` es el único sitio donde vive el criterio de
+aceptación.
 
 Todo lo generado va a `out/`, que no se versiona.
 

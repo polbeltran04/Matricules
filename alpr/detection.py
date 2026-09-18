@@ -69,21 +69,41 @@ def aspect_ratio(rect):
     return hi / lo if lo > 0 else 0.0
 
 
-def plate_mask(gray):
+# Etiquetas de los pasos intermedios, en orden. Las usa
+# scripts/03_explain_pipeline.py para rotular el panel.
+STEP_LABELS = [
+    ("gray", "1. Gris"),
+    ("blackhat", "2. Blackhat = caracteres"),
+    ("light", "3. Zonas claras (Otsu)"),
+    ("sobel", "4. Sobel-x = bordes verticales"),
+    ("closed", "5. Cierre + Otsu = blobs"),
+    ("final", "6. Mascara final"),
+]
+
+
+def plate_mask(gray, steps=None):
     """Mascara binaria de las regiones con aspecto de matricula.
 
-    Devuelve la mascara final; util tambien para inspeccionar el efecto de cada
-    operacion morfologica al ajustar umbrales.
+    Si `steps` es un dict, se rellena con las imagenes intermedias (claves de
+    STEP_LABELS) para poder ilustrar el pipeline sin reimplementarlo. No afecta
+    al resultado.
     """
+    def record(name, image):
+        if steps is not None:
+            steps[name] = image.copy()
+
+    record("gray", gray)
     rect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (13, 5))
     square_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 
     # Blackhat: resalta lo oscuro sobre fondo claro -> los caracteres.
     blackhat = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, rect_kernel)
+    record("blackhat", blackhat)
 
     # Regiones claras de la escena: aisla la chapa blanca de la matricula.
     light = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, square_kernel)
     light = cv2.threshold(light, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    record("light", light)
 
     # Gradiente vertical: los caracteres generan bordes verticales densos.
     grad = cv2.Sobel(blackhat, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
@@ -91,11 +111,13 @@ def plate_mask(gray):
     lo, hi = grad.min(), grad.max()
     grad = np.zeros_like(grad) if hi == lo else (255 * (grad - lo) / (hi - lo))
     grad = grad.astype("uint8")
+    record("sobel", grad)
 
     # Cerrar los huecos entre caracteres para que la matricula sea UN blob.
     grad = cv2.GaussianBlur(grad, (5, 5), 0)
     grad = cv2.morphologyEx(grad, cv2.MORPH_CLOSE, rect_kernel)
     thresh = cv2.threshold(grad, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+    record("closed", thresh)
 
     # Post-proceso: limpiar ruido y quedarse solo con lo que cae en zona clara.
     thresh = cv2.erode(thresh, None, iterations=2)
@@ -103,8 +125,26 @@ def plate_mask(gray):
     thresh = cv2.bitwise_and(thresh, thresh, mask=light)
     thresh = cv2.dilate(thresh, None, iterations=2)
     thresh = cv2.erode(thresh, None, iterations=1)
+    record("final", thresh)
 
     return thresh
+
+
+def candidate_verdict(rect, image_area, ar_range=AR_RANGE,
+                      area_frac_range=AREA_FRAC_RANGE):
+    """Decide si un minAreaRect pasa los filtros: (acepta, motivo del rechazo).
+
+    Es el unico sitio donde vive el criterio de aceptacion; lo usan tanto
+    `detectPlates` como el script que ilustra el pipeline.
+    """
+    frac = (rect[1][0] * rect[1][1]) / image_area
+    if not (area_frac_range[0] <= frac <= area_frac_range[1]):
+        return False, (f"area {frac:.2%} fuera de "
+                       f"[{area_frac_range[0]:.1%}, {area_frac_range[1]:.0%}]")
+    ar = aspect_ratio(rect)
+    if not (ar_range[0] <= ar <= ar_range[1]):
+        return False, f"aspecto {ar:.2f} fuera de [{ar_range[0]}, {ar_range[1]}]"
+    return True, ""
 
 
 def detectPlates(image, work_width=WORK_WIDTH, max_candidates=MAX_CANDIDATES,
@@ -124,17 +164,12 @@ def detectPlates(image, work_width=WORK_WIDTH, max_candidates=MAX_CANDIDATES,
     contours = sorted(contours, key=cv2.contourArea, reverse=True)[:search_top]
 
     small_area = small.shape[0] * small.shape[1]
-    min_frac, max_frac = area_frac_range
-    min_ar, max_ar = ar_range
 
     candidates = []
     for contour in contours:
         rect = cv2.minAreaRect(contour)
-        w, h = rect[1]
-        frac = (w * h) / small_area
-        if not (min_frac <= frac <= max_frac):
-            continue
-        if not (min_ar <= aspect_ratio(rect) <= max_ar):
+        accepted, _ = candidate_verdict(rect, small_area, ar_range, area_frac_range)
+        if not accepted:
             continue
         # Volver a coordenadas de la imagen original: el angulo es invariante a
         # la escala, pero el area no lo seria.
