@@ -22,20 +22,30 @@ Obj6 split simple vs. cross-validation.
 ## Ejecutar
 
 ```powershell
-.\.venv\Scripts\Activate.ps1          # venv con Python 3.13
-python scripts/00_acquisition_protocol.py   # protocolo de adquisición (EXIF)
-python scripts/01_data_exploration.py       # propiedades + figuras + out/properties.csv
-python scripts/02_show_detections.py        # bounding boxes sobre las imágenes
-python tests/test_detection.py              # tests (también corre con pytest)
+.\.venv\Scripts\Activate.ps1   # venv con Python 3.13
+python main.py                 # pipeline completo: tests + las tres etapas (~22 s)
+python main.py --list          # qué etapas hay
+python main.py explore detect  # solo esas etapas
+python main.py --new           # incluir new_plates/ en la exploración
 ```
 
-`01_data_exploration.py` acepta `--new` (incluir `new_plates/`) y `--show` (abrir las figuras).
+`main.py` encadena las etapas, corta si alguna falla y resume tiempos al final. Cada etapa
+**sigue siendo ejecutable por separado** (el enunciado evalúa los entregables uno a uno):
+
+| Etapa | Script | Flags propios |
+|---|---|---|
+| `tests` | `tests/test_detection.py` | — |
+| `protocol` | `scripts/00_acquisition_protocol.py` | — |
+| `explore` | `scripts/01_data_exploration.py` | `--new`, `--show` |
+| `detect` | `scripts/02_show_detections.py` | `-n N` |
+
 Todo lo generado va a `out/`, que no se versiona.
 
 ## Estructura
 
 | Ruta | Qué es |
 |---|---|
+| `main.py` | Punto de entrada: encadena las etapas (lista `STAGES`, ampliar ahí al añadir sesiones) |
 | `config.py` | Rutas relativas al repo y constantes (`VIEWS`, `PLATE_AR`) |
 | `alpr/detection.py` | `detectPlates()`, `normalized_angle()`, `plate_mask()` |
 | `alpr/dataset.py` | Carga, deduplicado MD5, `plate_from_filename()`, `draw_candidates()` |

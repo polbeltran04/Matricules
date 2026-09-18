@@ -41,19 +41,29 @@ aparecen en las dos vistas.
 ## Uso
 
 ```powershell
-python scripts/00_acquisition_protocol.py   # protocolo de adquisición (EXIF)
-python scripts/01_data_exploration.py       # propiedades, figuras y out/properties.csv
-python scripts/02_show_detections.py        # bounding boxes sobre las imágenes
-python tests/test_detection.py              # tests
+python main.py                 # pipeline completo: tests + las tres etapas (~22 s)
+python main.py --list          # qué etapas hay
+python main.py explore detect  # solo esas etapas
+python main.py --new           # incluir new_plates/ en la exploración
 ```
 
-`01_data_exploration.py` acepta `--new` (incluir `new_plates/`) y `--show` (abrir las figuras).
+`main.py` encadena las etapas, corta si alguna falla y resume tiempos al final. Cada etapa
+sigue siendo ejecutable por separado:
+
+| Etapa | Script | Qué hace | Flags propios |
+|---|---|---|---|
+| `tests` | `tests/test_detection.py` | Tests de `alpr.detection` | — |
+| `protocol` | `scripts/00_acquisition_protocol.py` | Protocolo de adquisición (EXIF) | — |
+| `explore` | `scripts/01_data_exploration.py` | Propiedades, estadística y figuras | `--new`, `--show` |
+| `detect` | `scripts/02_show_detections.py` | Bounding boxes y mosaicos | `-n N` |
+
 Todo lo generado va a `out/`, que tampoco se versiona.
 
 ## Estructura
 
 | Ruta | Qué es |
 |---|---|
+| `main.py` | Punto de entrada: encadena las etapas en orden |
 | `config.py` | Rutas relativas al repo y constantes compartidas |
 | `alpr/detection.py` | `detectPlates()`, `normalized_angle()`, `plate_mask()` |
 | `alpr/dataset.py` | Carga, deduplicado MD5, ground truth, dibujo de cajas |
