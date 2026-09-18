@@ -85,8 +85,16 @@ tal cual: la versión que funciona es `scripts/01_data_exploration.py`.
 - Color, saturación e iluminación **no** separan las vistas (p > 0.7): las 69 fotos son del mismo
   Pixel 4 XL en el mismo parking. De ahí que el enunciado pida ampliar el dataset.
 
-## Pendiente
+## Dataset ampliado
 
-Ampliar el dataset (slide 17 del enunciado): fotos en `new_plates/<Frontal|Lateral>/<MATRICULA>.jpg`,
-anotadas en `new_plates/metadata.csv`, cubriendo condiciones que **sigan y que no sigan** el
-protocolo original — sol, sombra, noche, luz artificial, reflejos, bajo contraste y desenfoque leve.
+30 fotos propias en `new_plates/` (21 Frontal, 9 Lateral), anotadas en `new_plates/metadata.csv`.
+Las imágenes tampoco se versionan, pero el CSV sí, así que el etiquetado queda en el repo.
+
+> **Al transferirlas del móvil, no uses WhatsApp como imagen**: borra el EXIF y baja la resolución
+> a la cuarta parte. Envíalas como *Documento*, en un ZIP, o por cable.
+
+Con `python main.py --new`, el script 01 compara el dataset del profesorado con el nuestro y
+confirma que aportan condiciones distintas: iluminación (p = 1.3e-08), saturación (p = 5.7e-04),
+ángulo (p = 2.3e-06) y área de la placa (p = 4.4e-02).
+
+Pendiente para completar la checklist del enunciado: **fotos nocturnas y alguna desenfocada**.

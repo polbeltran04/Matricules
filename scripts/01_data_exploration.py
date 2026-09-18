@@ -151,17 +151,29 @@ def main():
     print(f"tasa de deteccion: {detected:.1%} "
           f"({df['n_candidates'].gt(0).sum()}/{len(df)} imagenes con candidato)")
 
+    properties = [("hue", "Color (H)"),
+                  ("saturation", "Saturacion (S)"),
+                  ("value", "Iluminacion (V)"),
+                  ("plate_angle", "Viewpoint (angulo)"),
+                  ("plate_area", "Distancia focal (area)")]
+
     print("\nSeparacion entre vistas (Mann-Whitney):")
     df["abs_angle"] = df["plate_angle"].abs()
-    for column in ["abs_angle", "plate_angle", "hue", "saturation", "value", "plate_area"]:
+    for column in ["abs_angle"] + [c for c, _ in properties]:
         report_separation(df, column)
 
-    for column, title in [("hue", "Color (H)"),
-                          ("saturation", "Saturacion (S)"),
-                          ("value", "Iluminacion (V)"),
-                          ("plate_angle", "Viewpoint (angulo)"),
-                          ("plate_area", "Distancia focal (area)")]:
+    for column, title in properties:
         compare_distributions(df, column, title, "view", config.OUT_DIR, args.show)
+
+    # Con el dataset ampliado, la comparacion que pide el Obj1: nuestras fotos
+    # siguen o no el protocolo de adquisicion del profesorado?
+    if df["source"].nunique() > 1:
+        print("\nSeparacion entre datasets (protocolo vs. dataset ampliado):")
+        for column in ["abs_angle"] + [c for c, _ in properties]:
+            report_separation(df, column, groups="source")
+        for column, title in properties:
+            compare_distributions(df, column, title, "source", config.OUT_DIR, args.show)
+
     print(f"figuras -> {config.OUT_DIR}")
 
     if args.show:

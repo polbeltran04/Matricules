@@ -114,16 +114,33 @@ el recorte parte la matrícula por la mitad.
   Mann-Whitney p = 4.9e-07. Frontal tiene el 79% de imágenes bajo 3°; Lateral solo el 12%.
 - Única imagen sin candidato: `Lateral/0907JRF.jpg`.
 
-## Pendiente: ampliar el dataset (slide 17)
+## Dataset ampliado (slide 17)
 
-Fotos propias o de internet en `new_plates/<Frontal|Lateral>/<MATRICULA>.jpg`, anotadas en
-`new_plates/metadata.csv`. El enunciado exige cubrir imágenes que **sigan y que no sigan** el protocolo:
+**30 fotos propias** en `new_plates/`, 21 Frontal y 9 Lateral, anotadas en `new_plates/metadata.csv`.
+OPPO A94 5G, 4000×3000, con EXIF intacto (**importante: transferir sin WhatsApp**, que borra el EXIF
+y baja a 2000×1500). Matrículas leídas a mano y validadas contra el formato español
+(4 dígitos + 3 consonantes, sin vocales ni Ñ/Q).
 
-- [ ] Luz solar directa
-- [ ] Sombra
-- [ ] Noche
-- [ ] Luz artificial
-- [ ] Reflejos / glare
-- [ ] Bajo contraste
-- [ ] Ligeramente desenfocadas
-- [ ] Viewpoints distintos de los del protocolo original
+Con `--new`, el script 01 añade la comparación **protocolo vs. dataset ampliado**, que es el Obj1:
+
+| Propiedad | real_plates | new_plates | p | |
+|---|---|---|---|---|
+| Iluminación (V) | 108.2 | **127.0** | 1.3e-08 | SEPARA |
+| Saturación (S) | 41.8 | **50.0** | 5.7e-04 | SEPARA |
+| Ángulo | 4.2° | −4.8° | 2.3e-06 | SEPARA |
+| Área de placa | 219432 | 172747 | 4.4e-02 | SEPARA |
+
+Es decir: las nuestras son objetivamente **más brillantes, más saturadas y tomadas desde más lejos**.
+Exterior soleado frente a parking cubierto. Ese contraste medido es el argumento del Obj1.
+
+Cobertura de condiciones — **falta lo nocturno**:
+
+- [x] Luz solar directa (22 fotos)
+- [x] Sombra (6)
+- [x] Luz artificial (1, garaje)
+- [x] Reflejos / glare (1, parasol)
+- [x] Bajo contraste (4, carrocerías oscuras)
+- [x] Viewpoints distintos
+- [x] Matrículas traseras (4) — el dataset original solo tiene delanteras
+- [ ] **Noche**
+- [ ] **Desenfocadas**

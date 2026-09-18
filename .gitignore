@@ -10,6 +10,8 @@ real_plates/
 new_plates/*/*.jpg
 new_plates/*/*.jpeg
 new_plates/*/*.png
+new_plates/*/*.heic
+new_plates/*/*.webp
 
 # Enunciado del challenge (material del profesorado).
 *.pdf

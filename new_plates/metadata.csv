@@ -1,6 +1,31 @@
 filename,plate,view,illumination,glare,blur,low_contrast,follows_protocol,notes
-# Rellenar una fila por foto nueva. Borrar estas dos lineas de ejemplo.
-# illumination: sunlight | shadow | night | artificial
-# glare/blur/low_contrast/follows_protocol: yes | no
-0000XXX.jpg,0000XXX,Frontal,sunlight,no,no,no,yes,ejemplo - borrar
-1111YYY.jpg,1111YYY,Lateral,night,yes,yes,yes,no,ejemplo - borrar
+0367HCY.jpg,0367HCY,Frontal,sunlight,no,no,yes,no,"matricula trasera, coche negro"
+0703LWB.jpg,0703LWB,Frontal,sunlight,no,no,no,no,"coche amarillo, alto contraste"
+0998LBZ.jpg,0998LBZ,Frontal,sunlight,no,no,no,no,
+1219DCS.jpg,1219DCS,Frontal,sunlight,no,no,yes,no,"carroceria negra, reflejos"
+1374KKD.jpg,1374KKD,Frontal,sunlight,no,no,no,no,matricula sucia y danada
+1553MVV.jpg,1553MVV,Frontal,sunlight,no,no,no,no,matricula trasera
+2164HPT.jpg,2164HPT,Frontal,shadow,no,no,no,yes,
+2268KCB.jpg,2268KCB,Frontal,sunlight,no,no,no,no,sombra moteada en el capo
+2469GGD.jpg,2469GGD,Frontal,artificial,no,no,no,yes,"garaje, luz artificial"
+2562JPC.jpg,2562JPC,Frontal,sunlight,no,no,no,no,
+2671DVF.jpg,2671DVF,Frontal,shadow,no,no,no,yes,sombra moteada
+4618JGP.jpg,4618JGP,Frontal,sunlight,no,no,no,no,
+4937LHP.jpg,4937LHP,Frontal,sunlight,no,no,yes,no,carroceria oscura al sol
+5891DPW.jpg,5891DPW,Frontal,sunlight,yes,no,no,no,parasol reflectante en parabrisas
+5929JWN.jpg,5929JWN,Frontal,sunlight,no,no,no,no,
+7157DPS.jpg,7157DPS,Frontal,shadow,no,no,no,yes,sombra moteada
+7978GMM.jpg,7978GMM,Frontal,sunlight,no,no,no,no,
+8031KLV.jpg,8031KLV,Frontal,sunlight,no,no,no,no,
+8160KKR.jpg,8160KKR,Frontal,sunlight,no,no,no,no,matricula trasera
+8650MYK.jpg,8650MYK,Frontal,shadow,no,no,no,yes,sombra moteada
+9830HKM.jpg,9830HKM,Frontal,sunlight,no,no,no,no,
+1576MWT.jpg,1576MWT,Lateral,shadow,no,no,yes,no,carroceria oscura en sombra
+2490GXM.jpg,2490GXM,Lateral,sunlight,no,no,no,no,
+2785HJB.jpg,2785HJB,Lateral,shadow,no,no,no,yes,
+3755JCD.jpg,3755JCD,Lateral,sunlight,no,no,no,no,matricula trasera escorada
+4579NKF.jpg,4579NKF,Lateral,shadow,no,no,no,no,sombra moteada de arbol
+6548GSV.jpg,6548GSV,Lateral,sunlight,no,no,no,no,paragolpes danado
+6703GLW.jpg,6703GLW,Lateral,sunlight,no,no,no,no,sol y sombra de arbol
+7784JGC.jpg,7784JGC,Lateral,sunlight,no,no,yes,no,carroceria negra a contraluz
+9080CWT.jpg,9080CWT,Lateral,sunlight,no,no,no,no,sombras duras
