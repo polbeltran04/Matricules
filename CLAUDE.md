@@ -161,6 +161,32 @@ Dos avisos:
   en un editor (labelImg, CVAT, Roboflow, Label Studio).
 - Con 202 imágenes no se entrena YOLO de cero: toca *fine-tuning* de un modelo preentrenado.
 
+### Anotador interactivo
+
+`scripts/07_annotate.py` revisa las cajas una a una: muestra la propuesta del detector y se aprueba
+o se redibuja con el ratón.
+
+```powershell
+python scripts/07_annotate.py                 # todas las no revisadas
+python scripts/07_annotate.py --only-pending  # solo las que no tienen caja
+python scripts/07_annotate.py --list          # ver qué queda, sin abrir ventana
+```
+
+`a`/espacio aprobar · `d` dibujar · `n` sin matrícula · `s` saltar · `z` deshacer · `q` salir.
+
+Lleva registro en `yolo_dataset/reviewed.csv` y **guarda tras cada decisión**, así que se puede
+parar y continuar. Las ya revisadas no vuelven a salir, de modo que al añadir fotos nuevas solo
+pide las que faltan.
+
+### Tolerancia de la caja: IoU
+
+Una caja anotada no tiene que ser exacta al píxel. El estándar (PASCAL VOC, y `mAP@0.5` de YOLO)
+acepta **IoU ≥ 0.5** — la mitad de solape entre la caja predicha y la real.
+
+Para ALPR conviene ser más estricto: detrás viene segmentar caracteres, y una caja que corta la
+placa arruina esa etapa aunque el IoU sea 0.5. Criterio a usar: **IoU ≥ 0.7 y la matrícula
+completa dentro**. Al anotar, mejor pasarse un poco de margen que quedarse corto.
+
 Cuando las cajas estén revisadas, se podrá medir IoU y comparar morfológico vs. YOLO sobre el mismo
 conjunto de validación — que es el Obj3 y, con el split, el Obj6.
 
