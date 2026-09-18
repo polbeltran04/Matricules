@@ -53,6 +53,7 @@ sigue siendo ejecutable por separado:
 | Etapa | Script | Qué hace | Flags propios |
 |---|---|---|---|
 | `tests` | `tests/test_detection.py` | Tests de `alpr.detection` | — |
+| `dataset` | `tests/test_dataset.py` | Integridad del ground truth | — |
 | `protocol` | `scripts/00_acquisition_protocol.py` | Protocolo de adquisición (EXIF) | — |
 | `explore` | `scripts/01_data_exploration.py` | Propiedades, estadística y figuras | `--new`, `--show` |
 | `detect` | `scripts/02_show_detections.py` | Bounding boxes y mosaicos | `-n N` |
@@ -79,11 +80,15 @@ tal cual: la versión que funciona es `scripts/01_data_exploration.py`.
 
 ## Estado — Sesión 1 completa
 
-- Detección: **98.6%** de imágenes con candidato (68/69); ~88% con la matrícula bien localizada.
-- El ángulo del `minAreaRect` **separa las dos vistas**: mediana |ángulo| 0.53° en Frontal frente a
-  6.48° en Lateral (Mann-Whitney, p = 4.9e-07).
-- Color, saturación e iluminación **no** separan las vistas (p > 0.7): las 69 fotos son del mismo
-  Pixel 4 XL en el mismo parking. De ahí que el enunciado pida ampliar el dataset.
+- **Cobertura del detector: 99.0%** (200/202 imágenes con al menos un candidato).
+- El ángulo del `minAreaRect` **separa las dos vistas** (Mann-Whitney, p < 0.001).
+- Dentro del dataset del profesorado, color e iluminación **no** separan nada: son todas del mismo
+  móvil en el mismo parking. Al añadir las nuestras, la iluminación separa con p = 1.4e-26.
+
+> **La cobertura no es la tasa de acierto.** Mide en cuántas imágenes el detector devolvió *algo*,
+> no si ese algo era la matrícula — con una mediana de 3 candidatos por imagen, la mayoría no lo es.
+> Medir el acierto requiere ground truth de caja e IoU, que está **pendiente**. Esas mismas cajas
+> hacen falta para entrenar YOLO en la Sesión 2, así que el trabajo sirve para ambas cosas.
 
 ## Dataset ampliado
 

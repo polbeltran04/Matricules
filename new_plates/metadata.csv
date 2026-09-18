@@ -10,7 +10,6 @@ filename,plate,view,illumination,glare,blur,low_contrast,follows_protocol,notes
 0577HVC.jpg,0577HVC,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 0703LWB.jpg,0703LWB,Frontal,sunlight,no,no,no,no,"coche amarillo, alto contraste"
 0787NCP.jpg,0787NCP,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
-0934FZK.jpg,0934FZK,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 0934LWL.jpg,0934LWL,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 0998LBZ.jpg,0998LBZ,Frontal,sunlight,no,no,no,no,
 1018KMF.jpg,1018KMF,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
@@ -101,6 +100,7 @@ filename,plate,view,illumination,glare,blur,low_contrast,follows_protocol,notes
 9830HKM.jpg,9830HKM,Frontal,sunlight,no,no,no,no,
 9872JZY.jpg,9872JZY,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 9890MXS.jpg,9890MXS,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
+9935FZK.jpg,9935FZK,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; correccion de lectura"
 9935GTC.jpg,9935GTC,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 0009NFF.jpg,0009NFF,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 0594GMB.jpg,0594GMB,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
@@ -118,7 +118,7 @@ filename,plate,view,illumination,glare,blur,low_contrast,follows_protocol,notes
 3758MFC.jpg,3758MFC,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 4031MLP.jpg,4031MLP,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 4322DXS.jpg,4322DXS,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
-4328FGG.jpg,4328FGG,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
+4326FGC.jpg,4326FGC,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; correccion de lectura"
 4579NKF.jpg,4579NKF,Lateral,shadow,no,no,no,no,sombra moteada de arbol
 5241DGG.jpg,5241DGG,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 6548GSV.jpg,6548GSV,Lateral,sunlight,no,no,no,no,paragolpes danado
@@ -128,12 +128,12 @@ filename,plate,view,illumination,glare,blur,low_contrast,follows_protocol,notes
 7784JGC.jpg,7784JGC,Lateral,sunlight,no,no,yes,no,carroceria negra a contraluz
 7969KWT.jpg,7969KWT,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 7975LPW.jpg,7975LPW,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
+8222BLZ.jpg,8222BLZ,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; era espanola moderna, mal leida como formato antiguo"
 8709JKP.jpg,8709JKP,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 9080CWT.jpg,9080CWT,Lateral,sunlight,no,no,no,no,sombras duras
 9165MGM.jpg,9165MGM,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 ANDJ2891.jpg,AND J2891,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; formato no espanol moderno"
 B2048UJ.jpg,B2048UJ,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; formato no espanol moderno"
-B222BLZ.jpg,B222BLZ,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; formato no espanol moderno"
 BN03XGU.jpg,BN03XGU,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; formato no espanol moderno"
 DS409CL.jpg,DS409CL,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; formato no espanol moderno"
 FF995RY.jpg,FF995RY,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; formato no espanol moderno"

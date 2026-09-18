@@ -147,9 +147,15 @@ def main():
     df.to_csv(csv_path, index=False)
     print(f"\n{len(df)} imagenes -> {csv_path}")
 
-    detected = df["n_candidates"].gt(0).mean()
-    print(f"tasa de deteccion: {detected:.1%} "
-          f"({df['n_candidates'].gt(0).sum()}/{len(df)} imagenes con candidato)")
+    # OJO: esto mide COBERTURA, no acierto. Dice en cuantas imagenes
+    # `detectPlates` devolvio algo, no si ese algo era la matricula: un faro o
+    # una rejilla cuentan igual. Medir el acierto exige ground truth de caja
+    # (coordenadas) y calcular IoU, y el dataset no lo trae.
+    covered = df["n_candidates"].gt(0)
+    print(f"cobertura: {covered.mean():.1%} ({covered.sum()}/{len(df)} imagenes "
+          f"con >=1 candidato)  <- NO es la tasa de acierto, ver README")
+    print(f"candidatos por imagen: mediana {df['n_candidates'].median():.0f}, "
+          f"maximo {df['n_candidates'].max():.0f}")
 
     properties = [("hue", "Color (H)"),
                   ("saturation", "Saturacion (S)"),

@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parent
 # (nombre, script, descripcion). El orden es el de ejecucion.
 STAGES = [
     ("tests", "tests/test_detection.py", "Tests de alpr.detection"),
+    ("dataset", "tests/test_dataset.py", "Integridad del ground truth"),
     ("protocol", "scripts/00_acquisition_protocol.py", "Protocolo de adquisicion (EXIF)"),
     ("explore", "scripts/01_data_exploration.py", "Propiedades, estadistica y figuras"),
     ("detect", "scripts/02_show_detections.py", "Bounding boxes y mosaicos"),

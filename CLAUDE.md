@@ -35,6 +35,7 @@ python main.py --new           # incluir new_plates/ en la exploración
 | Etapa | Script | Flags propios |
 |---|---|---|
 | `tests` | `tests/test_detection.py` | — |
+| `dataset` | `tests/test_dataset.py` | — |
 | `protocol` | `scripts/00_acquisition_protocol.py` | — |
 | `explore` | `scripts/01_data_exploration.py` | `--new`, `--show` |
 | `detect` | `scripts/02_show_detections.py` | `-n N` |
@@ -108,11 +109,24 @@ el recorte parte la matrícula por la mitad.
 
 ## Estado actual (Sesión 1 completa)
 
-- Detección: **98.6%** de imágenes con candidato (68/69); ~88% con la matrícula bien localizada
-  por inspección visual de `out/detections/mosaico_*.jpg`.
-- El ángulo **separa las vistas**: mediana |ángulo| Frontal 0.53° vs Lateral 6.48°,
-  Mann-Whitney p = 4.9e-07. Frontal tiene el 79% de imágenes bajo 3°; Lateral solo el 12%.
-- Única imagen sin candidato: `Lateral/0907JRF.jpg`.
+- **Cobertura: 99.0%** (200/202 imágenes con ≥1 candidato), mediana de 3 candidatos por imagen.
+- El ángulo **separa las vistas** y la iluminación **separa los datasets** (ver arriba).
+
+### La cobertura NO es la tasa de acierto
+
+`cobertura` mide en cuántas imágenes `detectPlates` devolvió *algo*, no si ese algo era la
+matrícula: un faro o una rejilla cuentan igual. Con mediana de 3 candidatos por imagen, la mayoría
+de lo devuelto **no** es la placa.
+
+**No existe todavía validación automática del acierto.** El ~88% que se citó en su momento salió de
+mirar `out/detections/mosaico_*.jpg` a ojo: no es reproducible ni recalculable.
+
+Medir el acierto de verdad exige **ground truth de caja** (coordenadas de la matrícula por imagen)
+y calcular IoU. El dataset no lo trae y anotarlo está pendiente — pero no es trabajo extra:
+**YOLO necesita esas mismas cajas para entrenarse en la Sesión 2**, así que anotar sirve a la vez
+para entrenar el modelo nuevo y para evaluar el morfológico actual.
+
+Mientras tanto, la única evidencia de calidad es visual (`scripts/02`, `scripts/03`).
 
 ## Dataset ampliado (slide 17)
 
@@ -132,10 +146,28 @@ Matrículas leídas a mano y validadas contra el formato español (4 dígitos + 
 sin vocales ni Ñ/Q). **Ese validador detectó dos errores de lectura reales**: `5241OGG`→`5241DGG`
 y `6158CCQ`→`6158CCG`, porque la O y la Q no existen en matrículas españolas.
 
-`new_plates/OtrosFormatos/` guarda 6 matrículas que **no** siguen el formato español moderno:
-2 francesas, 1 andorrana, 1 británica y 2 españolas antiguas (`B 2048 UJ`). No está en
-`config.VIEWS`, así que queda fuera de la estadística y del ground truth, pero documentada:
-es un caso real que un ALPR desplegado en España se encuentra.
+`new_plates/OtrosFormatos/` guarda 5 matrículas que **no** siguen el formato español moderno:
+2 francesas, 1 andorrana, 1 británica y 1 española antigua (`B 2048 UJ`, placa blanca sin banda
+europea). No está en `config.VIEWS`, así que queda fuera de la estadística y del ground truth,
+pero documentada: es un caso real que un ALPR desplegado en España se encuentra.
+
+### Lección: la excepción manual eludió el control
+
+`8222BLZ` se leyó como `B222BLZ` y se clasificó a mano en `OtrosFormatos` por parecer una
+matrícula antigua. Al tratarla como excepción, **se saltó el validador de formato** — que es
+justo lo que la habría cazado. Otras dos (`4326FGC` y `9935FZK`) se corrigieron porque el usuario
+las revisó, no porque ningún control las detectara.
+
+De ahí `tests/test_dataset.py` (etapa `dataset` de `main.py`), que comprueba la integridad del
+ground truth de forma automática: formato de todos los nombres, que nada en `OtrosFormatos` sea
+en realidad una matrícula española válida, y que `metadata.csv` y el disco coincidan.
+
+**Tasa de error conocida del etiquetado: 3 de 108 (≈3%) en el segundo lote.** Es una cota inferior:
+solo son los errores que alguien llegó a revisar. Conviene tenerlo presente al interpretar la
+precisión del OCR en las Sesiones 5-6 — parte del error medido será de las etiquetas.
+
+También: tras deduplicar, **2 de las 69 imágenes del profesorado no llevan matrícula en el nombre**
+(`PXL_*` sin copia nombrada), así que no tienen ground truth. El test lo deja fijado.
 
 Con `--new`, el script 01 añade la comparación **protocolo vs. dataset ampliado** (Obj1):
 
