@@ -140,11 +140,21 @@ coincide con el 86.8% real de ese subconjunto, pero no valía como evidencia.
 lo ajustada que está la caja. Para IoU hacen falta cajas anotadas — las mismas que YOLO necesitará
 para entrenar, así que anotarlas no es trabajo extra.
 
-### El dataset del profesorado tiene 2 etiquetas mal
+### Dos fotos del mismo coche: sufijo `_2`, no inventar matrícula
 
-Detectado al revisar los recortes: `3040JMB.jpg` muestra **3044 JMB** y `3567DCX.jpg` muestra
-**3587 DCX**. Son errores de ground truth del material original, no fallos de detección. Están
-anotados en la columna `gt_issue` de los veredictos.
+`plate_from_filename()` usa un regex **anclado al inicio**, así que ignora cualquier sufijo:
+`3587DCX_2.jpg` → `3587DCX`. Eso permite tener varias fotos de un mismo coche en la misma carpeta
+sin perder el ground truth, y `clean_real_plates.py` asigna los sufijos solo al detectar colisión.
+
+El dataset original no lo hacía y por eso traía dos etiquetas mal, ambas ya corregidas:
+
+| Fichero original | Matrícula real | Ahora |
+|---|---|---|
+| `3040JMB.jpg` | 3044 JMB | `3044JMB.jpg` |
+| `3567DCX.jpg` | 3587 DCX (2ª foto del mismo Peugeot) | `3587DCX_2.jpg` |
+
+**Nunca renombrar inventando una matrícula para esquivar una colisión**: rompe el ground truth de
+forma silenciosa, y es justo lo que pasó con `3567DCX`.
 
 ## Dataset ampliado (slide 17)
 

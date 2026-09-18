@@ -35,15 +35,25 @@ MANUAL_PLATES = {
     "PXL_20210921_094938026.jpg": "1556GMZ",   # Lateral, VW Touran negro
 }
 
+# Ficheros cuyo nombre no coincide con la matricula que se ve en la foto.
+# `3567DCX` era el apano del profesorado para no repetir nombre: hay dos fotos
+# laterales del mismo Peugeot 3587 DCX. Aqui se resuelve con sufijo `_2`, que
+# `plate_from_filename()` ignora al extraer el ground truth.
+RELABEL = {
+    "3567DCX.jpg": "3587DCX",   # es el mismo coche que Lateral/3587DCX.jpg
+}
+
 
 def plan_for(directory):
     """Devuelve (renombrados, borrados, sin_resolver) para una carpeta."""
     paths = sorted(directory.glob("*.jpg"))
-    # Las que ya llevan matricula van primero: ganan el desempate del duplicado.
-    paths.sort(key=lambda p: plate_from_filename(p) is None)
+    # Orden de prioridad para los desempates: primero las que ya llevan bien la
+    # matricula (conservan su nombre), luego las reetiquetadas, y al final las
+    # que no la llevan. Asi el `_2` recae en la copia, no en el fichero correcto.
+    paths.sort(key=lambda p: (plate_from_filename(p) is None, p.name in RELABEL))
 
     renames, deletes, unresolved = [], [], []
-    seen = {}
+    seen, taken = {}, set()
     for path in paths:
         digest = file_md5(path)
         if digest in seen:
@@ -51,11 +61,21 @@ def plan_for(directory):
             continue
         seen[digest] = path
 
-        plate = plate_from_filename(path) or MANUAL_PLATES.get(path.name)
+        plate = (RELABEL.get(path.name) or plate_from_filename(path)
+                 or MANUAL_PLATES.get(path.name))
         if plate is None:
             unresolved.append(path)
             continue
-        target = directory / f"{plate}.jpg"
+
+        # Dos fotos distintas del mismo coche en la misma carpeta: se desempatan
+        # con `_2`, `_3`... El ground truth sigue siendo la matricula, porque
+        # `plate_from_filename()` solo mira el principio del nombre.
+        stem, n = plate, 2
+        while stem in taken:
+            stem, n = f"{plate}_{n}", n + 1
+        taken.add(stem)
+
+        target = directory / f"{stem}.jpg"
         if target != path:
             renames.append((path, target))
     return renames, deletes, unresolved
