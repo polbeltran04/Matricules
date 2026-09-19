@@ -15,6 +15,8 @@ new_plates/*/*.webp
 
 # Enunciado del challenge (material del profesorado).
 *.pdf
+# ...pero nuestros propios informes si se versionan: son el entregable.
+!docs/*.pdf
 
 # Del dataset YOLO se versionan las etiquetas (son el trabajo de anotacion,
 # texto y poco peso) pero no las copias de las fotos.

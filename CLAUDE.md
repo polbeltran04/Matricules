@@ -140,34 +140,61 @@ coincide con el 86.8% real de ese subconjunto, pero no valía como evidencia.
 **Limitación**: acierto = el recorte contiene la matrícula entera y legible. No mide lo ajustada
 que está la caja. Para eso está el IoU, abajo.
 
-## Línea base de localización: IoU (las 200 anotadas)
+## Línea base de localización: IoU (las 221 anotadas)
 
-Con las 200 cajas anotadas a mano, `scripts/08_iou_baseline.py` (etapa `iou`) mide lo que ni la
+Con las 221 cajas anotadas a mano, `scripts/08_iou_baseline.py` (etapa `iou`) mide lo que ni la
 cobertura ni el acierto medían: **cuánto se solapa la caja propuesta con la real**.
 
 | Grupo | IoU medio | Mediana | ≥ 0.5 | ≥ 0.7 |
 |---|---|---|---|---|
-| **TOTAL** | 0.562 | 0.678 | **65.0%** | **48.0%** |
-| `real_plates` | 0.747 | 0.806 | 85.3% | 70.6% |
-| `new_plates` | 0.467 | 0.600 | 54.5% | 36.4% |
-| Frontal | 0.560 | 0.676 | 63.6% | 46.3% |
-| Lateral | 0.565 | 0.709 | 67.1% | 50.6% |
+| **TOTAL** | 0.543 | 0.664 | **62.9%** | **45.2%** |
+| `real_plates` | 0.736 | 0.804 | 84.1% | 69.6% |
+| `new_plates` | 0.456 | 0.575 | 53.3% | 34.2% |
+| Frontal | 0.546 | 0.652 | 62.1% | 43.2% |
+| Lateral | 0.539 | 0.691 | 64.0% | 48.3% |
 
-**El 65.0% a IoU ≥ 0.5 coincide con el 67.0% de acierto revisado a ojo.** Son dos medidas
-independientes —una geométrica y automática, otra humana y cualitativa— que se diferencian en 2
-puntos. Eso valida las dos: el 67% no era una impresión, y el IoU no está mal calculado.
+Sobre las 200 primeras el TOTAL era 0.562 / 65.0% / 48.0%. **Baja porque el dataset es más duro,
+no porque el detector haya cambiado**: el lote nocturno arrastra la media.
 
-Al umbral que ALPR necesita (**IoU ≥ 0.7**), baja al **48%**.
+**El 65.0% a IoU ≥ 0.5 que dio sobre esas 200 coincidía con el 67.0% de acierto revisado a ojo.**
+Son dos medidas independientes —una geométrica y automática, otra humana y cualitativa— que se
+diferencian en 2 puntos. Eso valida las dos: el 67% no era una impresión, y el IoU no está mal
+calculado.
+
+Al umbral que ALPR necesita (**IoU ≥ 0.7**), baja al **45.2%**.
+
+### La noche es la peor condición, con diferencia
+
+| Condición (`new_plates`) | n | IoU medio | ≥ 0.5 | ≥ 0.7 |
+|---|---|---|---|---|
+| Sol | 125 | 0.466 | 54.4% | 36.8% |
+| Sombra | 7 | 0.494 | 57.1% | 28.6% |
+| Luz artificial | 6 | 0.465 | 66.7% | 33.3% |
+| **Noche** | **14** | **0.344** | **35.7%** | **14.3%** |
+| (marcadas desenfocadas) | 10 | 0.483 | 60.0% | 30.0% |
+
+De noche el acierto a IoU ≥ 0.7 cae del 37% al **14.3%**.
+
+**Matiz que hay que contar bien:** las desenfocadas salen *mejor* que la media nocturna (0.483 vs
+0.344). No se contradice — desenfoque y noche se solapan pero no son lo mismo, y varias de las
+marcadas como borrosas son de parking con buena luz. **Lo que hunde al detector es la falta de luz,
+no la falta de nitidez.**
+
+### Las matrículas cuadradas de 2 líneas son invisibles por diseño
+
+`AR_RANGE = (2.5, 6.5)` y una placa cuadrada tiene AR ~1.3–1.6, así que **el detector no puede
+encontrarlas**. Medido: `9653GPM` (Land Rover) da IoU 0.365 y `8758JFX` (moto) da **0.000**, ni un
+candidato. No es un bug: es una limitación del diseño, documentada con número.
 
 ### Localizar mal y cortar son fallos distintos
 
-Sobre las 97 con cuadrilátero, separando ambos:
+Sobre las 116 con cuadrilátero, separando ambos:
 
 | | |
 |---|---|
-| Ni la localiza (IoU < 0.5) | **32.0%** |
-| De las que sí localiza: la coge entera | solo **21.2%** |
-| De las que sí localiza: la corta | **78.8%** (contención mediana 0.945) |
+| Ni la localiza (IoU < 0.5) | **35.3%** |
+| De las que sí localiza: la coge entera | solo **20.0%** |
+| De las que sí localiza: la corta | **80.0%** (contención mediana 0.944) |
 
 O sea: cuando encuentra la matrícula, **casi siempre se come un trozo** — típicamente un carácter
 del borde. Eso es lo que rompe la segmentación posterior, más que los fallos de localización.
@@ -206,9 +233,21 @@ se marcan las esquinas o se redibuja con el ratón.
 ```powershell
 python scripts/07_annotate.py                 # todas las no revisadas
 python scripts/07_annotate.py --only-pending  # solo las que no tienen caja
+python scripts/07_annotate.py --review        # repasar las ya guardadas
+python scripts/07_annotate.py --all           # las 221, revisadas o no
+python scripts/07_annotate.py --newest 21     # solo el último lote añadido
 python scripts/07_annotate.py --list          # ver qué queda, sin abrir ventana
 python scripts/07_annotate.py --rebuild --pad 0.06   # rehacer cajas con otro margen
 ```
+
+**`--newest N` es el flujo al añadir fotos**: muestra las N revisadas más recientemente, en orden
+alfabético y con la matrícula en la cabecera, para comprobar de un vistazo que el lote está bien
+nombrado. Si un nombre no coincide, **no se arregla desde el anotador** (solo toca cajas): hay que
+renombrar en disco y corregir `metadata.csv` a la vez, o se descuadran.
+
+Los modos `--review` y `--all` ordenan **de más a menos sospechosa** según el aspecto de la caja:
+una caja con AR 1.2 casi nunca es la matrícula. `--newest` ordena alfabéticamente, que para
+comprobar nombres es más cómodo.
 
 `c` esquinas · `a`/espacio aprobar · `d` rectángulo · `n` sin matrícula · `s` saltar ·
 `z` deshacer · `+`/`-` zoom · `q` salir.
@@ -258,13 +297,17 @@ completa dentro**. Al anotar, mejor pasarse un poco de margen que quedarse corto
 Cuando las cajas estén revisadas, se podrá medir IoU y comparar morfológico vs. YOLO sobre el mismo
 conjunto de validación — que es el Obj3 y, con el split, el Obj6.
 
-#### Estado: 200 de 200 anotadas
+#### Estado: 221 de 221 anotadas
 
 | Cómo se marcó | Cuántas |
 |---|---|
 | `quad` — 4 esquinas | **97** |
+| `confirmed` — revisada por segunda vez | 21 |
 | `drawn` — rectángulo arrastrado | 39 |
 | `approved` — pre-anotación del detector aceptada | 64 |
+
+Hay **118 cuadriláteros** en total (las 21 `confirmed` se marcaron por esquinas y luego se
+revalidaron).
 
 Las 97 rectifican correctamente con `warpPerspective` y **las 97 placas resultantes se leen y
 coinciden con el nombre del fichero**: son 97 etiquetas de ground truth confirmadas de forma
@@ -314,7 +357,7 @@ forma silenciosa, y es justo lo que pasó con `3567DCX`.
 
 ## Dataset ampliado (slide 17)
 
-**138 fotos propias** en `new_plates/`, en dos lotes, anotadas en `new_plates/metadata.csv`.
+**157 fotos propias** en `new_plates/`, en tres lotes, anotadas en `new_plates/metadata.csv`.
 Todas con EXIF intacto (**importante: transferir sin WhatsApp**, que borra el EXIF y baja a
 2000×1500; enviar como *Documento* o en ZIP).
 
@@ -324,7 +367,7 @@ Todas con EXIF intacto (**importante: transferir sin WhatsApp**, que borra el EX
 | Fotos | 30 | 108 |
 | ISO | 100–2163 | 50 (constante) |
 
-Reparto: **Frontal 103 · Lateral 29 · OtrosFormatos 6**. Total con `real_plates`: **201 imágenes**.
+Reparto: **Frontal 113 · Lateral 39 · OtrosFormatos 5**. Total con `real_plates`: **226 imágenes**.
 
 Matrículas leídas a mano y validadas contra el formato español (4 dígitos + 3 consonantes,
 sin vocales ni Ñ/Q). **Ese validador detectó dos errores de lectura reales**: `5241OGG`→`5241DGG`
@@ -365,14 +408,36 @@ Con `--new`, el script 01 añade la comparación **protocolo vs. dataset ampliad
 Las nuestras son **mucho más brillantes y saturadas, y tomadas desde más lejos**: exterior soleado
 frente a parking cubierto. Ese contraste medido es el argumento del Obj1.
 
-Cobertura de condiciones — **falta lo nocturno y el desenfoque**:
+Cobertura de condiciones — **completa**:
 
 - [x] Luz solar directa · sombra · luz artificial (garaje)
 - [x] Reflejos / glare, bajo contraste (carrocerías oscuras)
 - [x] Viewpoints y cámaras distintas (3 móviles en total)
 - [x] Matrículas traseras — el dataset original solo tiene delanteras
-- [ ] **Noche**
-- [ ] **Desenfocadas**
+- [x] **Noche** — 14 imágenes
+- [x] **Desenfocadas** — 10 imágenes
 
-**Aviso: el reparto Frontal/Lateral está desbalanceado** (103 vs 29). Al evaluar por vista, usar
-métricas que no se dejen arrastrar por el desequilibrio.
+**Aviso: el reparto Frontal/Lateral está desbalanceado** (122 vs 80 globalmente, 113 vs 39 en
+`new_plates`). Al evaluar por vista, usar métricas que no se dejen arrastrar por el desequilibrio.
+
+### Tercer lote: noche y desenfoque (19 fotos)
+
+OPPO A94 5G. 14 nocturnas de calle y 5 de parking cubierto. Las nocturnas salieron a **ISO 16000**
+con exposición de 1/10 s a mano alzada, que es el máximo de la cámara.
+
+El desenfoque se etiquetó **midiéndolo**, no a ojo: varianza del laplaciano sobre la imagen
+reducida a 800 px de ancho. La mediana del resto del dataset es 9815 y su mínimo 1995; estas 19 van
+de **311 a 4566**, o sea que todas caen por debajo del percentil 10. `blur=yes` solo en las 10
+claramente peores, para que la etiqueta signifique algo.
+
+Dos cosas que trajo este lote:
+
+- **`5891DPW_2`**: el mismo VW Touran que ya estaba de día, ahora de noche. Es una **comparación
+  controlada** — mismo coche, mismas placas, condiciones opuestas.
+- **Dos matrículas cuadradas de 2 líneas** (un Land Rover y una moto). Son formato español moderno
+  válido, así que van en `Frontal`/`Lateral` con normalidad, pero el detector no puede verlas por
+  su relación de aspecto (ver arriba).
+
+**Casi se cuela un error de lectura**: en la hoja de contactos reducida `9126CPG` parecía `8126CPG`.
+Se cazó al ampliar a resolución nativa antes de renombrar. Por eso el orden es siempre: leer al 100%,
+validar formato, y solo entonces mover ficheros.

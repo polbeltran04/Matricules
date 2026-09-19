@@ -1,0 +1,695 @@
+<title>ALPR Sesión 1</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  :root {
+    --ink: #1a1d21; --soft: #5b6470; --line: #d6dbe1; --bg: #ffffff;
+    --accent: #1f5c8b; --warn: #8b3a1f; --code-bg: #f4f6f8;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); margin: 0;
+         font: 10.2pt/1.5 "Charter", "Georgia", "Times New Roman", serif; }
+  .wrap { max-width: 178mm; margin: 0 auto; padding-block: 0; }
+  h1 { font-size: 23pt; line-height: 1.15; margin: 0 0 2mm; letter-spacing: -.01em; }
+  h2 { font-size: 14pt; margin: 9mm 0 3mm; padding-bottom: 1.4mm;
+       border-bottom: 1.6pt solid var(--accent); color: var(--accent);
+       break-after: avoid; }
+  h3 { font-size: 11.2pt; margin: 5.5mm 0 2mm; color: var(--ink); break-after: avoid; }
+  h4 { font-size: 10.2pt; margin: 4mm 0 1.5mm; color: var(--soft);
+       text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+  p { margin: 0 0 2.6mm; }
+  ul, ol { margin: 0 0 2.6mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1.2mm; }
+  code { font-family: "Consolas", "Menlo", monospace; font-size: .88em;
+         background: var(--code-bg); padding: .5mm 1mm; border-radius: 2px; }
+  pre { background: var(--code-bg); border-left: 2.4pt solid var(--accent);
+        padding: 2.5mm 3mm; margin: 0 0 3mm; overflow-x: auto;
+        font: 8.4pt/1.42 "Consolas","Menlo",monospace; break-inside: avoid; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 0 0 3.5mm;
+          font-size: 9.2pt; break-inside: avoid; }
+  th { text-align: left; border-bottom: 1.2pt solid var(--ink);
+       padding: 1.5mm 2mm; font-size: 8.4pt; text-transform: uppercase;
+       letter-spacing: .05em; color: var(--soft); }
+  td { border-bottom: .5pt solid var(--line); padding: 1.5mm 2mm;
+       vertical-align: top; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .lede { font-size: 11pt; color: var(--soft); margin: 0 0 5mm;
+          padding-bottom: 4mm; border-bottom: .5pt solid var(--line); }
+  .meta { font-size: 8.6pt; color: var(--soft); margin: 0 0 7mm;
+          text-transform: uppercase; letter-spacing: .07em; }
+  .key { background: #f7f9fb; border: .5pt solid var(--line);
+         border-left: 2.4pt solid var(--accent); padding: 2.8mm 3.5mm;
+         margin: 0 0 3.5mm; break-inside: avoid; }
+  .key.w { border-left-color: var(--warn); background: #fdf8f6; }
+  .key p:last-child { margin-bottom: 0; }
+  .fn { margin: 0 0 4mm; break-inside: avoid; }
+  .fn > .sig { font-family: "Consolas","Menlo",monospace; font-size: 9.4pt;
+               font-weight: 700; color: var(--accent); margin-bottom: 1mm; }
+  .pipe { font-family: "Consolas","Menlo",monospace; font-size: 8.6pt;
+          line-height: 1.7; background: var(--code-bg); padding: 3mm;
+          margin: 0 0 3.5mm; break-inside: avoid; }
+  .toc { column-count: 2; column-gap: 8mm; font-size: 9.4pt;
+         margin: 0 0 4mm; padding: 3mm 4mm; background: #f7f9fb;
+         border: .5pt solid var(--line); }
+  .toc ol { margin: 0; padding-left: 5mm; }
+  .toc li { margin-bottom: .8mm; break-inside: avoid; }
+  .pb { break-before: page; }
+  strong { font-weight: 700; }
+  .num { font-variant-numeric: tabular-nums; }
+</style>
+
+<div class="wrap">
+
+<h1>ALPR Sesión 1</h1>
+<p class="meta">Challenge #1 · PSIV2 Vision &amp; Learning · UAB · 18 septiembre 2026</p>
+
+<p class="lede">Informe completo del trabajo hecho: qué se implementó, por qué,
+qué hace cada función del código y qué números tenemos para defender la sesión.</p>
+
+<div class="toc">
+<ol>
+<li>Dónde estamos</li>
+<li>Cómo se llegó hasta aquí</li>
+<li>El dataset</li>
+<li><code>config.py</code></li>
+<li><code>alpr/detection.py</code></li>
+<li><code>alpr/dataset.py</code></li>
+<li>Los scripts</li>
+<li><code>main.py</code> y los tests</li>
+<li>Las tres métricas</li>
+<li>La anotación de las 200 cajas</li>
+<li>Qué queda pendiente</li>
+<li>Preguntas probables en la revisión</li>
+</ol>
+</div>
+
+<h2>1. Dónde estamos</h2>
+
+<p>La Sesión 1 está cerrada salvo dos condiciones de dataset: tenemos detector
+propio, 207 imágenes con ground truth, 200 cajas anotadas a mano y tres métricas
+medidas.</p>
+
+<p>El challenge es reconocer matrículas de coches a partir de fotos. Se descompone
+en cuatro etapas, y cada sesión del calendario ataca una:</p>
+
+<div class="pipe">
+Adquisición  &rarr;  Detección  &rarr;  Segmentación de caracteres  &rarr;  Reconocimiento<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(S1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(S2)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(S2&ndash;S3)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(S5&ndash;S6)
+</div>
+
+<p>Nosotros estamos al final de la etapa 1 y con la 2 preparada. El profesorado dio
+un script de exploración de datos que <strong>no arrancaba</strong>: importaba un módulo
+<code>license_plate</code> que no existía, y apuntaba a <code>D:\Teaching\...</code>,
+una ruta de su propio ordenador. Implementar ese módulo desde cero fue el grueso
+del trabajo.</p>
+
+<h4>Los seis objetivos del enunciado</h4>
+<table>
+<tr><th>Obj</th><th>Qué pide</th><th>Estado</th></tr>
+<tr><td class="n">1</td><td>Impacto de cómo se adquieren los datos</td><td><strong>Hecho</strong> — demostrado con estadística (§9)</td></tr>
+<tr><td class="n">2</td><td>Morfología en pre y post-proceso</td><td><strong>Hecho</strong> — es el detector entero (§5)</td></tr>
+<tr><td class="n">3</td><td>YOLO</td><td>Preparado: dataset exportado y línea base medida</td></tr>
+<tr><td class="n">4</td><td>Estructuras de imagen (bordes, blobs)</td><td><strong>Hecho</strong> — Sobel y contornos en el detector</td></tr>
+<tr><td class="n">5</td><td>Descriptores (HOG, LBP)</td><td>Sesión 5</td></tr>
+<tr><td class="n">6</td><td>Split simple vs. cross-validation</td><td>Split estratificado hecho, semilla fija</td></tr>
+</table>
+
+<div class="key">
+<p><strong>Restricción del enunciado:</strong> nada de Jupyter Notebooks. Todo en
+<code>.py</code> (el enunciado especifica Spyder + numpy/pandas/sklearn/PyTorch).</p>
+</div>
+
+<h2>2. Cómo se llegó hasta aquí</h2>
+
+<p>El trabajo siguió este orden, y cada paso salió de un problema concreto del anterior.</p>
+
+<ol>
+<li><strong>Arreglar lo que no arrancaba.</strong> Implementar <code>detectPlates()</code>
+desde cero y sustituir las rutas del profesor por rutas relativas al repo.</li>
+<li><strong>Descubrir que el dataset tenía 29 duplicados exactos.</strong> Detectados
+por MD5. Sin deduplicar, toda la estadística salía sesgada.</li>
+<li><strong>Caracterizar el protocolo de adquisición leyendo los EXIF.</strong> Las 69
+imágenes del profesorado son del mismo móvil, mismo tipo de día y mismo parking.</li>
+<li><strong>Demostrar el Obj1 con estadística.</strong> El ángulo separa Frontal de
+Lateral; el color y la iluminación no separan nada, porque todas las fotos
+comparten cámara y escenario.</li>
+<li><strong>Ampliar el dataset con 138 fotos propias</strong>, en dos lotes y con dos
+móviles distintos. Aquí la iluminación sí separa los dos datasets, y con eso el
+Obj1 queda demostrado de verdad.</li>
+<li><strong>Medir el acierto real revisando los 200 recortes a mano.</strong> Salió 67%,
+no el 99% que parecía.</li>
+<li><strong>Anotar las 200 cajas</strong> y medir el IoU del detector contra ellas.</li>
+</ol>
+
+<h3>Tres decisiones que hay que saber explicar</h3>
+
+<div class="key">
+<p><strong><code>WORK_WIDTH = 400</code>, no 1024.</strong> El detector reduce la imagen
+antes de trabajar. La receta clásica usa ~1024 px, pero aquí el coche llena el
+encuadre y la matrícula ocupa el 23% del ancho. Los kernels morfológicos actúan a
+escala de <em>carácter</em>, así que lo que importa es cuántos píxeles mide una
+letra, no la imagen. Medido sobre 12 imágenes: a 400 px acierta 10 de 11, a
+1024 px solo 6 de 12, y además el recorte parte la matrícula por la mitad.</p>
+</div>
+
+<div class="key">
+<p><strong>El ángulo se calcula a mano, no con el código del profesor.</strong>
+<code>cv2.minAreaRect</code> devuelve el ángulo en un rango que <strong>cambia entre
+versiones de OpenCV</strong> (<code>[-90,0)</code> en la 5.0, <code>(0,90]</code> en las
+4.x). La corrección del código base (<code>angle - 90 if w &lt; h</code>) daba
+<strong>&minus;180° para una placa horizontal</strong>. Hay un test que lo cubre.</p>
+</div>
+
+<div class="key w">
+<p><strong>Nunca inventar una matrícula para esquivar una colisión de nombres.</strong>
+El dataset original tenía dos fotos del mismo coche; como no se puede repetir
+nombre de fichero, alguien cambió un dígito del nombre. Eso rompe el ground truth
+en silencio. La solución es el sufijo <code>_2</code>, que el lector de matrículas
+ignora porque su expresión regular está anclada al inicio del nombre.</p>
+</div>
+
+<h2 class="pb">3. El dataset</h2>
+
+<p><strong>El nombre del fichero ES el ground truth.</strong> Un fichero llamado con la
+matrícula significa que en esa foto se ve esa matrícula. Eso da etiquetas gratis
+para evaluar las etapas 2 a 4, y es la convención que hay que mantener al añadir
+fotos.</p>
+
+<table>
+<tr><th>Carpeta</th><th class="n">Frontal</th><th class="n">Lateral</th><th class="n">Otros</th><th class="n">Total</th></tr>
+<tr><td><code>real_plates</code> (profesorado)</td><td class="n">19</td><td class="n">50</td><td class="n">—</td><td class="n">69</td></tr>
+<tr><td><code>new_plates</code> (nuestras)</td><td class="n">103</td><td class="n">30</td><td class="n">5</td><td class="n">138</td></tr>
+<tr><td><strong>Total</strong></td><td class="n"><strong>122</strong></td><td class="n"><strong>80</strong></td><td class="n"><strong>5</strong></td><td class="n"><strong>207</strong></td></tr>
+</table>
+
+<p><code>new_plates/OtrosFormatos/</code> guarda 5 matrículas que no siguen el formato
+español moderno: 2 francesas, 1 andorrana, 1 británica y 1 española antigua. Queda
+fuera de la estadística pero documentada, porque es un caso real que un ALPR
+desplegado se encuentra.</p>
+
+<h3>Las 29 duplicadas</h3>
+
+<p>El dataset del profesorado traía 98 ficheros, pero <strong>29 eran copias byte a
+byte</strong>: los <code>PXL_2021*.jpg</code> son el mismo fichero que los ya nombrados
+con la matrícula. Quedan 69 únicas. Cualquier media calculada sin deduplicar
+cuenta esas imágenes dos veces.</p>
+
+<p>Se detectan comparando el hash MD5 del contenido, no el nombre. Ya están
+borradas del disco, pero el código sigue deduplicando al vuelo por si reaparecen.</p>
+
+<h3>El protocolo de adquisición, medido de los EXIF</h3>
+
+<p>Constante en las 69: <strong>Google Pixel 4 XL</strong>, focal 4.38 mm, f/1.73,
+4032×2268, <strong>sin flash</strong>. Seis días entre el 21 de septiembre y el 8 de
+octubre de 2021. <strong>ISO 39–1809, mediana 480</strong>: ISO alto significa parking
+cubierto con luz artificial, que es donde está tomada la mayoría.</p>
+
+<p>Consecuencia directa: <strong>color, saturación e iluminación NO separan Frontal de
+Lateral</strong> (p &gt; 0.7 en los tres), porque todas las fotos comparten cámara y
+escenario. Lo único que separa las vistas es el ángulo. Por eso el enunciado pide
+ampliar el dataset.</p>
+
+<h3>Errores de etiqueta que encontramos</h3>
+
+<p>Leer 138 matrículas a mano tiene tasa de error. Se detectaron siete, por tres
+vías distintas:</p>
+
+<table>
+<tr><th>Cómo se detectó</th><th class="n">Cuántos</th><th>Qué pasó</th></tr>
+<tr><td>Validador de formato</td><td class="n">2</td><td>Se había leído una O y una Q, letras que <strong>no existen</strong> en matrículas españolas</td></tr>
+<tr><td>Revisión manual</td><td class="n">4</td><td>Dígitos y consonantes confundidos a baja resolución</td></tr>
+<tr><td>Colisión de nombres</td><td class="n">1</td><td>Dos fotos del mismo coche; se renombró una inventando un dígito</td></tr>
+</table>
+
+<p>El formato español moderno es <strong>4 dígitos + 3 consonantes</strong>, sin vocales y
+sin Ñ ni Q. Esa regla es la que permite validar automáticamente.</p>
+
+<div class="key w">
+<p><strong>La lección que hay que saber contar:</strong> una matrícula se leyó mal (un 8
+como una B) y por eso pareció de formato antiguo, así que se clasificó a mano como
+excepción. Al tratarla como excepción <strong>se saltó el validador de formato</strong>,
+que es justo lo que la habría cazado. De ahí que ahora haya tests automáticos de
+integridad del ground truth.</p>
+</div>
+
+<p>Tasa de error conocida del etiquetado: <strong>3 de 108 (≈3%)</strong> en el segundo
+lote. Es una cota inferior, porque solo cuenta los errores que alguien llegó a
+revisar. Conviene tenerlo presente al interpretar la precisión del OCR en las
+Sesiones 5-6: parte del error medido será de las etiquetas, no del modelo.</p>
+
+<h3>Privacidad</h3>
+
+<p>Las fotos <strong>no se versionan</strong>. Son matrículas reales de terceros, o sea dato
+personal identificable (RGPD). El repositorio de GitHub es privado. Sí se
+versionan las anotaciones — <code>metadata.csv</code>, los veredictos, las etiquetas
+YOLO — porque son nuestro trabajo y pesan poco.</p>
+
+<h2 class="pb">4. <code>config.py</code></h2>
+
+<p>Rutas y constantes compartidas. Existe para que el proyecto funcione en
+cualquier máquina: el código base tenía <code>D:\Teaching\...</code> escrito a fuego.</p>
+
+<pre><code>ROOT            = Path(__file__).resolve().parent
+REAL_PLATES_DIR = ROOT / "real_plates"   # dataset del profesorado
+NEW_PLATES_DIR  = ROOT / "new_plates"    # dataset ampliado por nosotros
+OUT_DIR         = ROOT / "out"           # figuras y CSV (no versionado)
+VIEWS           = ["Frontal", "Lateral"]
+PLATE_AR        = 520 / 110              # ~4.73</code></pre>
+
+<p><code>PLATE_AR</code> es la relación de aspecto real de una matrícula española
+(520 × 110 mm). Se usa como referencia al juzgar si una caja es plausible.
+<code>VIEWS</code> no incluye <code>OtrosFormatos</code>, y por eso esa carpeta queda
+fuera de toda la estadística automáticamente.</p>
+
+<h2>5. <code>alpr/detection.py</code></h2>
+
+<p>El corazón del proyecto. Sustituye al módulo
+<code>license_plate.LicensePlateDetector</code> que el código base importaba y que no
+venía con el enunciado.</p>
+
+<p>La idea: una matrícula es <strong>caracteres oscuros sobre chapa clara</strong>, lo que
+produce una firma muy característica — bordes verticales densos y regulares
+dentro de una región brillante. Todo el detector busca esa firma.</p>
+
+<h4>Constantes</h4>
+<table>
+<tr><th>Constante</th><th>Valor</th><th>Por qué</th></tr>
+<tr><td><code>WORK_WIDTH</code></td><td class="n">400</td><td>Ancho al que se reduce la imagen. Medido, no elegido (§2)</td></tr>
+<tr><td><code>AR_RANGE</code></td><td class="n">(2.5, 6.5)</td><td>Aspecto admisible. 4.73 de frente, menos en lateral por perspectiva</td></tr>
+<tr><td><code>AREA_FRAC_RANGE</code></td><td class="n">(0.001, 0.08)</td><td>Área del candidato sobre el área de la imagen. Una matrícula ocupa ~0.023</td></tr>
+<tr><td><code>SEARCH_TOP</code></td><td class="n">15</td><td>Contornos más grandes que se examinan</td></tr>
+<tr><td><code>MAX_CANDIDATES</code></td><td class="n">10</td><td>Candidatos que se devuelven como mucho</td></tr>
+</table>
+
+<h3>Las funciones</h3>
+
+<div class="fn">
+<div class="sig">normalized_angle(rect) → float</div>
+<p>Ángulo del <strong>lado largo</strong> del rectángulo respecto a la horizontal, en el
+rango (&minus;90, 90]. Cero grados significa lado largo horizontal, o sea vista
+frontal.</p>
+<p>Existe porque <code>cv2.minAreaRect</code> no garantiza que el lado que llama
+<em>width</em> sea el mayor, así que su ángulo unas veces se mide sobre el lado largo
+y otras sobre el corto. Aquí se calcula el lado largo con <code>atan2</code> sobre los
+cuatro vértices, lo que <strong>no depende de la versión de OpenCV</strong>. Después se
+pliega al rango, porque la orientación es módulo 180°.</p>
+</div>
+
+<div class="fn">
+<div class="sig">aspect_ratio(rect) → float</div>
+<p>Lado largo dividido entre lado corto. Trivial pero está aparte para que sea
+independiente de cuál de los dos lados llamó <em>width</em> OpenCV.</p>
+</div>
+
+<div class="fn">
+<div class="sig">plate_mask(gray, steps=None) → máscara binaria</div>
+<p>El pipeline morfológico completo, en seis pasos. <strong>Esto es el Obj2 del
+enunciado.</strong> Si se le pasa un diccionario en <code>steps</code>, guarda ahí cada
+imagen intermedia — así el script que ilustra el pipeline no reimplementa nada y
+nunca se desincroniza.</p>
+<table>
+<tr><th class="n">#</th><th>Operación</th><th>Para qué</th></tr>
+<tr><td class="n">1</td><td>Escala de grises</td><td>Punto de partida</td></tr>
+<tr><td class="n">2</td><td><strong>Blackhat</strong>, kernel 13×5</td><td>Resalta lo oscuro sobre fondo claro: <strong>los caracteres</strong></td></tr>
+<tr><td class="n">3</td><td><strong>Cierre</strong> 3×3 + <strong>Otsu</strong></td><td>Máscara de zonas claras: aísla la chapa blanca</td></tr>
+<tr><td class="n">4</td><td><strong>Sobel-x</strong> + normalizar</td><td>Bordes verticales: los caracteres los generan densos y regulares</td></tr>
+<tr><td class="n">5</td><td>Gauss 5×5 + <strong>cierre</strong> 13×5 + Otsu</td><td>Une los huecos entre caracteres para que la matrícula sea <strong>un solo blob</strong></td></tr>
+<tr><td class="n">6</td><td>Erosión ×2, dilatación ×2, <strong>AND</strong> con (3), dilatación ×2, erosión ×1</td><td>Limpia ruido y se queda solo con lo que cae en zona clara</td></tr>
+</table>
+<p>El kernel 13×5 es rectangular y ancho a propósito: une caracteres vecinos
+horizontalmente sin unir la matrícula con lo que tiene encima o debajo.</p>
+</div>
+
+<div class="fn">
+<div class="sig">candidate_verdict(rect, image_area, ...) → (bool, motivo)</div>
+<p><strong>El único sitio donde vive el criterio de aceptación.</strong> Devuelve si el
+rectángulo pasa los filtros y, si no, por qué no. Comprueba dos cosas:</p>
+<ol>
+<li><strong>Área</strong> como fracción de la imagen, dentro de <code>AREA_FRAC_RANGE</code>.
+Descarta ruido por abajo y carrocería por arriba.</li>
+<li><strong>Relación de aspecto</strong>, dentro de <code>AR_RANGE</code>.</li>
+</ol>
+<p>Que devuelva el motivo es lo que permite al script explicativo construir una
+tabla de decisión contorno a contorno. Y que esté centralizado significa que si
+cambias el criterio, cambian a la vez el detector y su explicación.</p>
+</div>
+
+<div class="fn">
+<div class="sig">detectPlates(image, ...) → lista de contornos</div>
+<p>La función que pedía el código base. Devuelve contornos aptos para
+<code>cv2.minAreaRect</code>, ordenados de mayor a menor área, o sea de mayor a menor
+plausibilidad. Los pasos:</p>
+<ol>
+<li>Reducir la imagen a <code>WORK_WIDTH</code> y guardar el factor de escala.</li>
+<li>Pasar a gris y aplicar <code>plate_mask</code>.</li>
+<li><code>findContours</code> sobre la máscara y ordenar por área descendente,
+quedándose con los <code>SEARCH_TOP</code> mayores.</li>
+<li>Para cada uno, <code>minAreaRect</code> y <code>candidate_verdict</code>.</li>
+<li><strong>Reescalar los contornos aceptados a la imagen original</strong> antes de
+devolverlos.</li>
+</ol>
+<div class="key">
+<p>El paso 5 es importante y fácil de olvidar: <strong>el ángulo es invariante a la
+escala, pero el área no</strong>. Si devolvieras los contornos en coordenadas de la
+imagen reducida, cualquier medida de área posterior estaría mal por un factor de
+(4032/400)² ≈ 100.</p>
+</div>
+</div>
+
+<h2 class="pb">6. <code>alpr/dataset.py</code></h2>
+
+<p>Carga del dataset, deduplicado y dibujo de candidatos.</p>
+
+<div class="fn">
+<div class="sig">file_md5(path) → str</div>
+<p>Hash MD5 del contenido del fichero. Sirve para detectar duplicados exactos:
+dos ficheros con distinto nombre pero el mismo contenido dan el mismo hash.</p>
+</div>
+
+<div class="fn">
+<div class="sig">plate_from_filename(path) → str | None</div>
+<p>Extrae la matrícula del nombre, o <code>None</code> si el nombre no la lleva. Usa la
+expresión regular <code>^(\d{4}[A-Z]{3})</code>.</p>
+<p><strong>El detalle clave es el <code>^</code>:</strong> está anclada al <em>inicio</em> del nombre,
+así que ignora cualquier sufijo. Un fichero terminado en <code>_2</code> o en
+<code> - copia</code> sigue devolviendo la matrícula correcta. Eso es lo que permite
+tener varias fotos del mismo coche en la misma carpeta sin perder el ground
+truth, y lo que hace innecesario inventar matrículas para esquivar colisiones.</p>
+</div>
+
+<div class="fn">
+<div class="sig">unique_images(directory) → (lista de rutas, nº descartados)</div>
+<p>Imágenes de la carpeta sin duplicados exactos, más cuántos se descartaron.</p>
+<p>Ante un duplicado <strong>conserva la copia cuyo nombre lleva la matrícula</strong>, que
+es la que tiene ground truth. Lo consigue ordenando primero por
+«¿tiene matrícula en el nombre?» antes de recorrer, de modo que esa copia gana
+siempre el desempate del <code>setdefault</code>.</p>
+</div>
+
+<div class="fn">
+<div class="sig">draw_candidates(image, contours, angles=None, color=...) → imagen</div>
+<p>Dibuja el <code>minAreaRect</code> de cada candidato, anotado con su ángulo. Es el
+tercer bullet de la slide 16 del enunciado, que el código base no hacía. El grosor
+del trazo se escala con el ancho de la imagen para que se vea igual en fotos de
+cualquier resolución.</p>
+</div>
+
+<h2>7. Los scripts</h2>
+
+<p>Uno por entregable, numerados por orden de ejecución. Cada uno es ejecutable
+por separado, porque el enunciado evalúa los entregables uno a uno.</p>
+
+<table>
+<tr><th>Script</th><th>Qué hace</th></tr>
+<tr><td><code>00_acquisition_protocol.py</code></td><td>Lee los EXIF y caracteriza el protocolo de adquisición: cámara, focal, apertura, ISO, flash, fechas. Es el segundo bullet de la slide 16.</td></tr>
+<tr><td><code>01_data_exploration.py</code></td><td>Reescritura del script del profesorado. Deduplica por MD5, convierte a HSV <strong>una sola vez</strong> (el original lo hacía tres veces), compara distribuciones por vista y por dataset con Mann-Whitney U, y vuelca <code>out/properties.csv</code>.</td></tr>
+<tr><td><code>02_show_detections.py</code></td><td>Dibuja las cajas candidatas sobre cada imagen y además guarda <strong>recortes individuales</strong> del candidato #1, más un índice <code>candidatos.csv</code>. Esos recortes son los que se revisaron a mano para medir el acierto.</td></tr>
+<tr><td><code>03_explain_pipeline.py</code></td><td>Material para la memoria: panel con las 6 etapas de <code>plate_mask()</code> y tabla de decisión contorno a contorno. <strong>Reutiliza <code>plate_mask(steps=...)</code> y <code>candidate_verdict()</code></strong>, así que nunca miente sobre lo que hace el detector real.</td></tr>
+<tr><td><code>05_detection_accuracy.py</code></td><td>Calcula la tasa de acierto real a partir de los veredictos revisados a mano, con intervalos de confianza de Wilson al 95%.</td></tr>
+<tr><td><code>06_export_yolo.py</code></td><td>Exporta el dataset en formato ultralytics. Usa los veredictos como <strong>pre-anotación</strong>: escribe la caja del detector donde acierta y deja vacías las demás. Split estratificado por dataset y vista, semilla fija 42 (160 train / 40 val). <strong>Nunca pisa una etiqueta existente</strong> sin <code>--force</code>.</td></tr>
+<tr><td><code>07_annotate.py</code></td><td>Anotador interactivo. Ver §10.</td></tr>
+<tr><td><code>08_iou_baseline.py</code></td><td>Mide el IoU del detector contra las cajas anotadas. Ver §9.</td></tr>
+<tr><td><code>clean_real_plates.py</code></td><td>Deja <code>real_plates/</code> consistente: borra duplicados y renombra a <code>&lt;MATRÍCULA&gt;.jpg</code>. Es <em>dry-run</em> por defecto; hace falta <code>--apply</code>.</td></tr>
+</table>
+
+<h2>8. <code>main.py</code> y los tests</h2>
+
+<p><code>main.py</code> encadena las etapas, corta si alguna falla y resume tiempos al
+final. Las etapas viven en una lista <code>STAGES</code>; al añadir una sesión nueva se
+amplía ahí.</p>
+
+<pre><code>python main.py                 # pipeline completo
+python main.py --list          # qué etapas hay
+python main.py explore detect  # solo esas etapas
+python main.py --new           # incluir new_plates/ en la exploración</code></pre>
+
+<p>Lanza cada etapa como subproceso, no la importa. Es a propósito: los scripts
+empiezan por dígitos, así que no son importables como módulos de Python, y además
+así siguen siendo ejecutables por separado.</p>
+
+<h3>Los dos ficheros de tests</h3>
+
+<table>
+<tr><th>Fichero</th><th>Qué fija</th></tr>
+<tr><td><code>tests/test_detection.py</code></td><td>5 tests: recuperación del ángulo, que una placa horizontal dé 0°, que el aspecto no dependa de la orientación, detección sobre una placa sintética, y recuperación del ángulo tras rotar.</td></tr>
+<tr><td><code>tests/test_dataset.py</code></td><td>5 tests de <strong>integridad del ground truth</strong>: formato de todos los nombres, que nada en <code>OtrosFormatos</code> sea en realidad una matrícula española válida, que <code>metadata.csv</code> y el disco coincidan, y que no queden imágenes sin ground truth.</td></tr>
+</table>
+
+<div class="key">
+<p><code>test_dataset.py</code> nació de un error real: una matrícula mal leída se
+clasificó a mano como excepción y así esquivó el validador. Los tests existen
+para que esa clase de error no pueda repetirse en silencio.</p>
+</div>
+
+<h2 class="pb">9. Las tres métricas</h2>
+
+<p>Este es el punto donde más fácil es equivocarse al explicar el proyecto. Hay
+<strong>tres números distintos</strong> y miden cosas distintas.</p>
+
+<table>
+<tr><th>Métrica</th><th class="n">Valor</th><th>Qué mide de verdad</th></tr>
+<tr><td><strong>Cobertura</strong></td><td class="n">99.0%</td><td>En cuántas imágenes el detector devolvió <em>algo</em>. Un faro cuenta igual.</td></tr>
+<tr><td><strong>Acierto</strong></td><td class="n">67.0%</td><td>En cuántas el recorte contenía la matrícula legible. Revisado a mano, una a una.</td></tr>
+<tr><td><strong>IoU</strong></td><td class="n">0.562</td><td>Cuánto se solapa la caja propuesta con la real. Lo único que mide la localización.</td></tr>
+</table>
+
+<div class="key w">
+<p><strong>Cobertura no es acierto.</strong> El 99% dice que casi siempre encuentra
+<em>algún</em> candidato, con mediana de 3 por imagen. Como la mayoría no son la
+matrícula, ese número solo no significa nada. Si en la revisión alguien dice «99%
+de detección», hay que corregirlo.</p>
+</div>
+
+<h3>El acierto, por grupos</h3>
+<table>
+<tr><th>Grupo</th><th class="n">Acierto</th><th class="n">IC 95%</th></tr>
+<tr><td><strong>TOTAL</strong></td><td class="n"><strong>67.0%</strong> (134/200)</td><td class="n">60.2 – 73.1%</td></tr>
+<tr><td><code>real_plates</code></td><td class="n">86.8% (59/68)</td><td class="n">76.7 – 92.9%</td></tr>
+<tr><td><code>new_plates</code></td><td class="n">56.8% (75/132)</td><td class="n">48.3 – 65.0%</td></tr>
+<tr><td><code>new_plates</code> Lateral</td><td class="n">43.3% (13/30)</td><td class="n">27.4 – 60.8%</td></tr>
+</table>
+
+<h3>El IoU, por grupos</h3>
+<table>
+<tr><th>Grupo</th><th class="n">IoU medio</th><th class="n">Mediana</th><th class="n">≥ 0.5</th><th class="n">≥ 0.7</th></tr>
+<tr><td><strong>TOTAL</strong></td><td class="n">0.562</td><td class="n">0.678</td><td class="n"><strong>65.0%</strong></td><td class="n"><strong>48.0%</strong></td></tr>
+<tr><td><code>real_plates</code></td><td class="n">0.747</td><td class="n">0.806</td><td class="n">85.3%</td><td class="n">70.6%</td></tr>
+<tr><td><code>new_plates</code></td><td class="n">0.467</td><td class="n">0.600</td><td class="n">54.5%</td><td class="n">36.4%</td></tr>
+<tr><td>Frontal</td><td class="n">0.560</td><td class="n">0.676</td><td class="n">63.6%</td><td class="n">46.3%</td></tr>
+<tr><td>Lateral</td><td class="n">0.565</td><td class="n">0.709</td><td class="n">67.1%</td><td class="n">50.6%</td></tr>
+</table>
+
+<div class="key">
+<p><strong>El dato que más confianza da al trabajo:</strong> el 65.0% a IoU ≥ 0.5 coincide
+con el 67.0% de acierto revisado a ojo. Son dos medidas <em>independientes</em> — una
+geométrica y automática, otra humana y cualitativa — que se diferencian en 2
+puntos. Eso valida las dos a la vez.</p>
+</div>
+
+<p>El estándar habitual (PASCAL VOC, el <code>mAP@0.5</code> que publica YOLO) acepta
+IoU ≥ 0.5. Para ALPR conviene ser más estricto y pedir <strong>IoU ≥ 0.7 con la
+matrícula entera dentro</strong>, porque detrás viene segmentar caracteres y una caja
+que corta la placa arruina esa etapa aunque solape medio. A ese umbral el
+detector baja al <strong>48%</strong>.</p>
+
+<h3>Localizar mal y cortar son fallos distintos</h3>
+
+<p>Sobre las 97 imágenes con cuadrilátero anotado, separando ambos fallos:</p>
+
+<table>
+<tr><th>Situación</th><th class="n">%</th></tr>
+<tr><td>Ni localiza la placa (IoU &lt; 0.5)</td><td class="n">32.0%</td></tr>
+<tr><td>De las que sí localiza: la coge entera</td><td class="n">solo 21.2%</td></tr>
+<tr><td>De las que sí localiza: la corta</td><td class="n">78.8%</td></tr>
+</table>
+
+<p>Contención mediana 0.945, o sea que cuando corta se deja alrededor de un 5% de
+la placa: típicamente un carácter del borde. <strong>Eso es lo que rompe la
+segmentación posterior</strong>, más que los fallos de localización.</p>
+
+<h3>El Obj1, demostrado</h3>
+
+<p>Con <code>--new</code>, el script 01 compara protocolo contra dataset ampliado:</p>
+
+<table>
+<tr><th>Propiedad</th><th class="n">real_plates</th><th class="n">new_plates</th><th class="n">p</th><th>Veredicto</th></tr>
+<tr><td>Iluminación (V)</td><td class="n">108.2</td><td class="n">143.1</td><td class="n">1.4e-26</td><td><strong>SEPARA</strong></td></tr>
+<tr><td>Saturación (S)</td><td class="n">41.8</td><td class="n">49.3</td><td class="n">2.0e-06</td><td><strong>SEPARA</strong></td></tr>
+<tr><td>Área de placa</td><td class="n">219432</td><td class="n">173956</td><td class="n">2.9e-02</td><td><strong>SEPARA</strong></td></tr>
+<tr><td>Ángulo</td><td class="n">4.2°</td><td class="n">2.2°</td><td class="n">0.14</td><td>no separa</td></tr>
+</table>
+
+<p>Las nuestras son mucho más brillantes y saturadas, y tomadas desde más lejos:
+exterior soleado frente a parking cubierto. <strong>Ese contraste medido es el
+argumento del Obj1</strong>, y la caída de 87% a 57% en acierto es su consecuencia
+práctica: el detector morfológico <strong>no generaliza</strong>.</p>
+
+<h2 class="pb">10. La anotación de las 200 cajas</h2>
+
+<p>Para entrenar YOLO y para medir IoU hace falta saber dónde está <em>de verdad</em>
+cada matrícula. Eso se anotó a mano con <code>07_annotate.py</code>.</p>
+
+<table>
+<tr><th>Cómo se marcó</th><th class="n">Cuántas</th></tr>
+<tr><td><code>quad</code> — marcando las 4 esquinas</td><td class="n"><strong>97</strong></td></tr>
+<tr><td><code>drawn</code> — rectángulo arrastrado</td><td class="n">39</td></tr>
+<tr><td><code>approved</code> — pre-anotación del detector aceptada</td><td class="n">64</td></tr>
+<tr><td><strong>Total</strong></td><td class="n"><strong>200</strong></td></tr>
+</table>
+
+<h3>Por qué esquinas y no un rectángulo</h3>
+
+<p>La caja que pide YOLO es <em>axis-aligned</em>: sus lados son paralelos a los ejes.
+Sobre una matrícula inclinada, esa caja <strong>tiene que</strong> meter parachoques.
+Medido sobre las 97 anotadas:</p>
+
+<table>
+<tr><th>Medida</th><th class="n">Valor</th></tr>
+<tr><td>AR real de la placa (mediana)</td><td class="n">4.23</td></tr>
+<tr><td>Inclinación (mediana / máx)</td><td class="n">6.3° / 25.8°</td></tr>
+<tr><td>Fondo extra que mete la caja recta</td><td class="n"><strong>+77%</strong></td></tr>
+</table>
+
+<p>De ese +77%, unos 60 puntos son la inclinación (inevitable) y el resto el
+margen fijo del 4% que añadimos a propósito.</p>
+
+<p>La solución fue marcar <strong>las 4 esquinas de la placa</strong>. De ahí el script
+deriva la caja recta añadiendo un margen fijo, igual para todas. Eso separa dos
+cosas que antes iban mezcladas:</p>
+
+<ul>
+<li>el <strong>cuadrilátero</strong> (<code>yolo_dataset/quads.csv</code>) es la placa exacta,
+sin fondo;</li>
+<li>la <strong>caja</strong> es un derivado reproducible, que se puede regenerar entera con
+otro margen sin reanotar nada.</li>
+</ul>
+
+<div class="key">
+<p>El cuadrilátero no es solo precisión: es exactamente lo que hace falta en la
+Sesión 2 para <code>cv2.getPerspectiveTransform</code>, o sea rectificar la placa antes
+de segmentar caracteres. Las esquinas se ordenan solas a TL-TR-BR-BL, así que el
+cuadrilátero sirve tal cual. <strong>El trabajo de anotar vale para dos etapas.</strong></p>
+</div>
+
+<h3>Verificación de la anotación</h3>
+
+<p>Las 97 rectifican correctamente con <code>warpPerspective</code>, y las 97 placas
+resultantes <strong>se leen y coinciden con el nombre del fichero</strong>. Son 97 etiquetas
+de ground truth confirmadas de forma independiente, casi la mitad del dataset.</p>
+
+<p>Además se comprobó automáticamente que ningún cuadrilátero tuviera las esquinas
+mal puestas: lados opuestos coherentes, aspecto plausible e inclinación razonable.
+Ninguno falló.</p>
+
+<h4>Detalle de uso</h4>
+<pre><code>python scripts/07_annotate.py                 # las no revisadas
+python scripts/07_annotate.py --only-pending  # solo las que no tienen caja
+python scripts/07_annotate.py --review        # repasar las ya guardadas
+python scripts/07_annotate.py --all           # las 200
+
+  c  marcar 4 esquinas       a  aprobar (GUARDA)
+  d  rectángulo arrastrado   s  saltar (NO guarda, vuelve a salir)
+  n  sin matrícula visible   z  deshacer     +/-  zoom     q  salir</code></pre>
+
+<p>Guarda tras cada decisión, así que se puede parar y continuar. Las revisadas no
+vuelven a salir, de modo que al añadir fotos nuevas solo pide las que faltan. Van
+ordenadas <strong>de más a menos sospechosa</strong> según el aspecto de la caja.</p>
+
+<h2>11. Qué queda pendiente</h2>
+
+<p>Nada de código. Faltan <strong>dos condiciones de dataset</strong> que el enunciado nombra
+explícitamente:</p>
+
+<table>
+<tr><th>Condición</th><th>Estado</th></tr>
+<tr><td>Luz solar directa · sombra · luz artificial</td><td>Cubierto</td></tr>
+<tr><td>Reflejos, bajo contraste (carrocerías oscuras)</td><td>Cubierto</td></tr>
+<tr><td>Viewpoints y cámaras distintas (3 móviles)</td><td>Cubierto</td></tr>
+<tr><td>Matrículas traseras</td><td>Cubierto</td></tr>
+<tr><td><strong>Noche</strong></td><td><strong>0 imágenes</strong></td></tr>
+<tr><td><strong>Desenfocadas</strong></td><td><strong>0 imágenes</strong></td></tr>
+</table>
+
+<p>Con 10–15 de cada bastaría. Conviene hacerlas <strong>antes</strong> de entrenar YOLO: si
+se entrena sin ellas, el modelo no las verá nunca y habría que repetir el ciclo.</p>
+
+<p>Dos avisos menores para interpretar los resultados:</p>
+<ul>
+<li>El reparto Frontal/Lateral global es 122/80, o sea <strong>60/40</strong>. Aceptable,
+pero al evaluar por vista conviene usar métricas que no se dejen arrastrar por el
+desequilibrio.</li>
+<li>La columna <code>glare</code> del metadata solo tiene 3 casos marcados de 138. No da
+para estratificar: mejor tratarla como anotación descriptiva.</li>
+</ul>
+
+<h3>Para la Sesión 2</h3>
+
+<p>Está todo listo: dataset en formato ultralytics, split estratificado con semilla
+fija y línea base medida contra la que comparar.</p>
+
+<div class="key">
+<p>Una decisión a tomar: <strong>con 202 imágenes no se entrena YOLO de cero.</strong> Toca
+<em>fine-tuning</em> de un modelo preentrenado (<code>yolov8n</code> o <code>yolov8s</code>).</p>
+</div>
+
+<h2 class="pb">12. Preguntas probables en la revisión</h2>
+
+<div class="fn">
+<div class="sig">¿Qué detección usáis, clásica o deep learning?</div>
+<p>Clásica, morfológica. Es lo que pide el Obj2 y es la línea base contra la que
+compararemos YOLO en la Sesión 2. Está medida: IoU medio 0.562, 65% a IoU ≥ 0.5.</p>
+</div>
+
+<div class="fn">
+<div class="sig">¿Cómo sabéis que el detector funciona?</div>
+<p>Con tres medidas distintas, y sabiendo lo que mide cada una. Cobertura 99%
+(devuelve algo), acierto 67% (revisado a mano recorte a recorte) e IoU 0.562
+(solape geométrico contra 200 cajas anotadas). El 65% a IoU ≥ 0.5 y el 67% de
+acierto coinciden, y son medidas independientes.</p>
+</div>
+
+<div class="fn">
+<div class="sig">¿Por qué reducís a 400 px y no a 1024?</div>
+<p>Porque los kernels morfológicos actúan a escala de carácter, no de imagen. En
+este dataset el coche llena el encuadre. Está medido sobre 12 imágenes: 400 px da
+10 de 11, 1024 px da 6 de 12.</p>
+</div>
+
+<div class="fn">
+<div class="sig">¿Cómo demostráis el impacto de la adquisición (Obj1)?</div>
+<p>Con Mann-Whitney U. Dentro del dataset del profesorado, el color y la
+iluminación <em>no</em> separan Frontal de Lateral (p &gt; 0.7) porque todas las fotos
+comparten cámara y parking; lo único que separa es el ángulo. Al comparar con
+nuestras fotos, la iluminación separa a p = 1.4e-26. Y la consecuencia práctica es
+la caída de acierto del 87% al 57%.</p>
+</div>
+
+<div class="fn">
+<div class="sig">¿Por qué el ángulo lo calculáis vosotros?</div>
+<p>Porque <code>cv2.minAreaRect</code> cambia de convención entre versiones de OpenCV.
+La corrección del código base da &minus;180° para una placa horizontal en OpenCV 5.0.
+Lo calculamos con <code>atan2</code> sobre los vértices, que no depende de la versión, y
+hay un test que lo fija.</p>
+</div>
+
+<div class="fn">
+<div class="sig">¿Cuántas imágenes tenéis y de dónde salen?</div>
+<p>207: 69 del profesorado (98 ficheros menos 29 duplicados exactos detectados por
+MD5) y 138 nuestras, tomadas con dos móviles distintos en dos lotes.</p>
+</div>
+
+<div class="fn">
+<div class="sig">¿Qué fiabilidad tienen vuestras etiquetas?</div>
+<p>Tasa de error conocida ≈3% en el segundo lote, y es una cota inferior. Hay un
+validador de formato (4 dígitos + 3 consonantes, sin vocales ni Ñ/Q) que cazó dos
+errores reales, y tests automáticos de integridad del ground truth.</p>
+</div>
+
+<div class="fn">
+<div class="sig">¿Por qué el detector falla más en vuestras fotos?</div>
+<p>Porque no generaliza. Funciona en el parking cubierto y con luz artificial del
+profesorado (87%) y se desploma en exterior soleado (57%), hasta 43% en laterales.
+Esa es precisamente la justificación cuantitativa para pasar a YOLO.</p>
+</div>
+
+</div>

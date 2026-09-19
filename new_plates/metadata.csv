@@ -15,7 +15,7 @@ filename,plate,view,illumination,glare,blur,low_contrast,follows_protocol,notes
 1018KMF.jpg,1018KMF,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 1041GSP.jpg,1041GSP,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 1152HGD.jpg,1152HGD,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
-1219DCS.jpg,1219DCS,Frontal,sunlight,no,no,yes,no,"carroceria negra, reflejos"
+1219DCS.jpg,1219DCS,Frontal,sunlight,yes,no,yes,no,"carroceria negra, reflejos"
 1374KKD.jpg,1374KKD,Frontal,sunlight,no,no,no,no,matricula sucia y danada
 1430JMK.jpg,1430JMK,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 1484LRT.jpg,1484LRT,Frontal,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
@@ -125,7 +125,7 @@ filename,plate,view,illumination,glare,blur,low_contrast,follows_protocol,notes
 6636JCK.jpg,6636JCK,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 6703GLW.jpg,6703GLW,Lateral,sunlight,no,no,no,no,sol y sombra de arbol
 7410MHJ.jpg,7410MHJ,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
-7784JGC.jpg,7784JGC,Lateral,sunlight,no,no,yes,no,carroceria negra a contraluz
+7784JGC.jpg,7784JGC,Lateral,sunlight,yes,no,yes,no,carroceria negra a contraluz
 7969KWT.jpg,7969KWT,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 7975LPW.jpg,7975LPW,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado"
 8222BLZ.jpg,8222BLZ,Lateral,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; era espanola moderna, mal leida como formato antiguo"
@@ -137,3 +137,22 @@ B2048UJ.jpg,B2048UJ,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterio
 BN03XGU.jpg,BN03XGU,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; formato no espanol moderno"
 DS409CL.jpg,DS409CL,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; formato no espanol moderno"
 FF995RY.jpg,FF995RY,OtrosFormatos,sunlight,no,no,no,no,"lote 2 (Xiaomi), exterior soleado; formato no espanol moderno"
+8430GGG.jpg,8430GGG,Frontal,artificial,no,yes,yes,yes,parking cubierto; carroceria negra
+6165FCV.jpg,6165FCV,Lateral,artificial,no,no,yes,yes,parking cubierto; carroceria negra
+4561BTD.jpg,4561BTD,Lateral,artificial,no,yes,no,yes,parking cubierto; matricula trasera
+4987NJG.jpg,4987NJG,Frontal,artificial,no,yes,no,yes,parking cubierto; matricula trasera
+6876MGN.jpg,6876MGN,Lateral,artificial,no,no,no,yes,parking cubierto
+8035LKT.jpg,8035LKT,Frontal,night,no,no,no,no,calle de noche
+3366JWC.jpg,3366JWC,Frontal,night,no,yes,no,no,calle de noche; matricula trasera
+2301JTC.jpg,2301JTC,Frontal,night,no,no,no,no,calle de noche
+2677LSJ.jpg,2677LSJ,Frontal,night,no,yes,no,no,calle de noche
+4043MHZ.jpg,4043MHZ,Lateral,night,no,yes,yes,no,"calle de noche; matricula trasera, coche negro"
+5209KNW.jpg,5209KNW,Frontal,night,no,yes,no,no,calle de noche
+8071LTH.jpg,8071LTH,Frontal,night,no,yes,yes,no,"calle de noche; matricula trasera, coche oscuro"
+5891DPW_2.jpg,5891DPW,Frontal,night,no,no,no,no,MISMO COCHE que 5891DPW de dia: comparacion controlada dia/noche
+3053JXD.jpg,3053JXD,Lateral,night,no,yes,no,no,calle de noche; matricula trasera
+4912KGF.jpg,4912KGF,Lateral,night,no,no,no,no,calle de noche; matricula trasera
+9653GPM.jpg,9653GPM,Frontal,night,no,yes,no,no,calle de noche; MATRICULA CUADRADA DE 2 LINEAS; matricula trasera
+8950FMW.jpg,8950FMW,Lateral,night,no,no,no,no,calle de noche
+9126CPG.jpg,9126CPG,Lateral,night,no,no,no,no,calle de noche
+8758JFX.jpg,8758JFX,Lateral,night,no,no,no,no,"calle de noche; MOTO, MATRICULA CUADRADA DE 2 LINEAS"

@@ -518,7 +518,10 @@ def main():
                              "sospechosa, para validarlas o rehacerlas")
     parser.add_argument("--all", action="store_true",
                         help="repasar TODAS las que tengan etiqueta, revisadas o "
-                             "no, de mas a menos sospechosa (las 200)")
+                             "no, de mas a menos sospechosa")
+    parser.add_argument("--newest", type=int, metavar="N",
+                        help="repasar solo las N revisadas mas recientemente, "
+                             "para comprobar el ultimo lote que se anadio")
     parser.add_argument("--list", action="store_true",
                         help="listar lo que queda por revisar y salir, sin abrir ventana")
     parser.add_argument("--pad", type=float, default=PAD_FRAC,
@@ -537,11 +540,23 @@ def main():
 
     reviewed = load_reviewed()
     quads = load_quads()
+
+    # El ultimo lote: las N con la marca de tiempo mas reciente. Sirve para
+    # comprobar de un vistazo que las fotos recien anadidas estan bien nombradas.
+    lote = None
+    if args.newest:
+        lote = {r["stem"] for r in sorted(reviewed.values(),
+                                          key=lambda r: r["when"],
+                                          reverse=True)[:args.newest]}
+
     items = []
     for split in ("train", "val"):
         for label in sorted((YOLO_DIR / "labels" / split).glob("*.txt")):
             stem = label.stem
-            if args.all:
+            if lote is not None:
+                if stem not in lote:
+                    continue
+            elif args.all:
                 pass                       # todas las que tengan etiqueta
             elif args.review:
                 if stem not in reviewed:
@@ -564,11 +579,15 @@ def main():
                           "ar": box_aspect(box, width, height),
                           "status": reviewed.get(stem, {}).get("status")})
 
-    # Primero lo mas dudoso: las que no tienen caja, luego las mas achatadas
-    # (AR bajo = mucho fondo recogido), luego el resto. Vale para los tres modos,
-    # y en las pre-anotadas es donde mas se nota: una caja del detector con AR 1.2
-    # casi siempre es un faro o una rejilla, no la matricula.
-    items.sort(key=lambda it: (it["ar"] is not None, it["ar"] or 0))
+    if lote is not None:
+        # Comprobando nombres: el orden alfabetico es mas comodo de seguir.
+        items.sort(key=lambda it: it["plate"])
+    else:
+        # Primero lo mas dudoso: las que no tienen caja, luego las mas achatadas
+        # (AR bajo = mucho fondo recogido), luego el resto. En las pre-anotadas es
+        # donde mas se nota: una caja del detector con AR 1.2 casi siempre es un
+        # faro o una rejilla, no la matricula.
+        items.sort(key=lambda it: (it["ar"] is not None, it["ar"] or 0))
 
     if not items:
         print("No queda nada por revisar.")
@@ -585,7 +604,9 @@ def main():
     else:
         print(f"  todas con la caja PRE-ANOTADA por el detector (sin revisar)")
     print(f"  {sum(1 for it in items if it['stem'] in quads)} con cuadrilatero")
-    print(f"En total hay {len(reviewed)} de 200 revisadas.\n")
+    total = sum(len(list((YOLO_DIR / "labels" / s).glob("*.txt")))
+                for s in ("train", "val"))
+    print(f"En total hay {len(reviewed)} de {total} revisadas.\n")
 
     if args.list:
         for it in items[:20]:
@@ -597,19 +618,25 @@ def main():
             print(f"  ... y {len(items) - 20} mas")
         return 0
 
-    if args.review:
+    if lote is not None:
+        print("  COMPRUEBA que la matricula del titulo coincide con la de la foto")
+        print("  a correcta | c rehacer la caja | d rehacer rectangulo")
+    elif args.review:
         print("  a la caja esta bien | c rehacer por esquinas | d rehacer rectangulo")
     else:
         print("  c esquinas (recomendado) | a aprobar | d rectangulo")
     print("  n sin matricula | s saltar | z deshacer | +/- zoom | q salir\n")
 
-    annotator = Annotator(items, quads, args.pad, review=args.review)
+    annotator = Annotator(items, quads, args.pad,
+                          review=args.review or lote is not None)
     annotator.run(reviewed)
 
     counts = {}
     for row in reviewed.values():
         counts[row["status"]] = counts.get(row["status"], 0) + 1
-    print(f"\nrevisadas en total: {len(reviewed)} de 200 -> {REVIEWED}")
+    hechas = sum(len(list((YOLO_DIR / "labels" / s).glob("*.txt")))
+                 for s in ("train", "val"))
+    print(f"\nrevisadas en total: {len(reviewed)} de {hechas} -> {REVIEWED}")
     for status, n in sorted(counts.items()):
         print(f"  {status:<10} {n}")
     print(f"cuadrilateros: {len(load_quads())} -> {QUADS}")
